@@ -1,0 +1,3512 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConstructCo – Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --primary: #f97316;
+        --primary-dark: #ea6c0a;
+        --bg: #f1f5f9;
+        --sidebar: #1e293b;
+        --sidebar-hover: #334155;
+        --white: #fff;
+        --text: #1e293b;
+        --muted: #64748b;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --border: #e2e8f0;
+        --radius: 10px;
+      }
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        overflow: hidden;
+      }
+      @media (max-width: 600px) {
+        body { height: 100dvh; }
+        #appWrapper { height: 100dvh; }
+      }
+      /* ── AUTH ── */
+      #loginScreen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #1e293b, #334155);
+      }
+      .auth-box {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 36px 32px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+      .auth-logo {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .auth-logo span {
+        font-size: 48px;
+      }
+      .auth-logo h2 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+      .auth-logo p {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .auth-tabs {
+        display: flex;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 4px;
+        margin-bottom: 20px;
+      }
+      .auth-tab {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted);
+        transition: 0.2s;
+      }
+      .auth-tab.active {
+        background: var(--white);
+        color: var(--text);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .auth-form input,
+      .auth-form select {
+        padding: 10px 14px;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: 0.2s;
+        width: 100%;
+      }
+      .auth-form input:focus,
+      .auth-form select:focus {
+        border-color: var(--primary);
+      }
+      .auth-err {
+        font-size: 13px;
+        text-align: center;
+        padding: 8px;
+        border-radius: 6px;
+        display: none;
+      }
+      .auth-err.err {
+        display: block;
+        background: #fef2f2;
+        color: var(--danger);
+        border: 1px solid #fecaca;
+      }
+      .auth-err.ok {
+        display: block;
+        background: #f0fdf4;
+        color: var(--success);
+        border: 1px solid #bbf7d0;
+      }
+      .role-summary {
+        font-size: 12px;
+        color: var(--muted);
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 10px 12px;
+        line-height: 1.8;
+      }
+      /* ── LAYOUT ── */
+      #appWrapper {
+        display: none;
+        height: 100vh;
+        flex-direction: row;
+      }
+      .sidebar {
+        width: 210px;
+        background: var(--sidebar);
+        display: flex;
+        flex-direction: column;
+        transition: 0.3s;
+        z-index: 200;
+        flex-shrink: 0;
+      }
+      .sidebar-brand {
+        padding: 18px 16px;
+        border-bottom: 1px solid #334155;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-av {
+        width: 36px;
+        height: 36px;
+        background: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #fff;
+        font-size: 16px;
+      }
+      .brand-info h3 {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .brand-info p {
+        color: #94a3b8;
+        font-size: 11px;
+      }
+      .nav-section {
+        padding: 12px 10px 4px;
+        font-size: 10px;
+        color: #64748b;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        color: #94a3b8;
+        cursor: pointer;
+        border-radius: 8px;
+        margin: 2px 8px;
+        transition: 0.2s;
+        font-size: 13.5px;
+      }
+      .nav-item:hover {
+        background: var(--sidebar-hover);
+        color: #fff;
+      }
+      .nav-item.active {
+        background: var(--primary);
+        color: #fff;
+      }
+      .nav-item span {
+        font-size: 16px;
+      }
+      .sidebar-footer {
+        margin-top: auto;
+        padding: 12px;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: #334155;
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      .user-av {
+        width: 32px;
+        height: 32px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+      .user-name {
+        font-size: 13px;
+        color: #fff;
+        font-weight: 600;
+      }
+      .user-role {
+        font-size: 11px;
+        color: #94a3b8;
+        text-transform: capitalize;
+      }
+      .btn-signout {
+        width: 100%;
+        padding: 8px;
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      /* ── MAIN ── */
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-width: 0;
+      }
+      .topbar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 20px;
+        height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .menu-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: var(--muted);
+      }
+      .page-title {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .page-bread {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .date-badge {
+        background: #f1f5f9;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .site-filter select {
+        padding: 5px 10px;
+        border: 1.5px solid var(--border);
+        border-radius: 6px;
+        font-size: 12px;
+        outline: none;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+      .btn-primary {
+        background: var(--primary);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--primary-dark);
+      }
+      .btn-outline {
+        background: #f1f5f9;
+        color: var(--text);
+        border: 1.5px solid var(--border);
+      }
+      .btn-outline:hover {
+        background: #e2e8f0;
+      }
+      .export-btn {
+        padding: 6px 14px;
+        background: #f1f5f9;
+        border: 1.5px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      /* ── CONTENT ── */
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+      }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
+      .g2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .g3 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .g4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .g5 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      /* ── RESPONSIVE: TABLET (≤900px) ── */
+      @media (max-width: 900px) {
+        .g4 { grid-template-columns: repeat(2, 1fr); }
+        .g5 { grid-template-columns: repeat(2, 1fr); }
+        .g3 { grid-template-columns: 1fr; }
+        .g2 { grid-template-columns: 1fr; }
+        .sidebar {
+          position: fixed;
+          left: -230px;
+          top: 0;
+          height: 100%;
+          z-index: 300;
+          transition: left 0.3s ease;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          z-index: 299;
+        }
+        .sidebar-overlay.show { display: block; }
+        .topbar { padding: 0 12px; }
+        .topbar-right .date-badge { display: none; }
+        .content { padding: 10px; }
+        .fbar { gap: 6px; }
+        .fi { font-size: 12px; padding: 6px 8px; }
+        .kpi { padding: 12px; }
+        .kpi-val { font-size: 20px; }
+        .card { padding: 12px; }
+        .sc { padding: 12px; }
+        .sv { font-size: 22px; }
+        .chbox { height: 160px; }
+        .srow { gap: 8px; }
+        .sp { padding: 10px 12px; min-width: 90px; }
+        .mf { flex-wrap: wrap; }
+        .mf .btn { flex: 1; min-width: 100px; }
+        .export-btn { display: none; }
+      }
+
+      /* ── RESPONSIVE: MOBILE (≤600px) ── */
+      @media (max-width: 600px) {
+        body { font-size: 13px; }
+        .g4 { grid-template-columns: 1fr 1fr; }
+        .g5 { grid-template-columns: 1fr 1fr; }
+        .g3 { grid-template-columns: 1fr; }
+        .g2 { grid-template-columns: 1fr; }
+        #appWrapper { flex-direction: column; }
+        .main { width: 100%; overflow: hidden; }
+        .content { padding: 8px; overflow-x: hidden; }
+        .topbar { padding: 0 10px; height: 50px; }
+        .page-bread { display: none; }
+        .topbar-right { gap: 6px; }
+        .site-filter select { max-width: 100px; font-size: 11px; }
+        /* Grids → single column on small */
+        .g4 { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .g5 { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .kpi { padding: 10px 12px; }
+        .kpi-val { font-size: 18px; }
+        .kpi-lbl { font-size: 11px; }
+        .kpi-sub { display: none; }
+        /* Filter bar stacks vertically */
+        .fbar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+        }
+        .fbar .fi { width: 100% !important; min-width: unset; font-size: 13px; }
+        .fbar .btn { width: 100%; }
+        /* Tables: horizontal scroll */
+        .tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { min-width: 520px; }
+        th, td { padding: 7px 8px; font-size: 11.5px; }
+        /* Modal full-screen on mobile */
+        .modal-overlay { align-items: flex-end; padding: 0; }
+        .modal {
+          max-width: 100%;
+          width: 100%;
+          margin: 0;
+          border-radius: 16px 16px 0 0;
+          max-height: 92vh;
+        }
+        /* Modal rows → single column */
+        .row { grid-template-columns: 1fr; gap: 10px; }
+        .row.full { grid-template-columns: 1fr; }
+        .mb { padding: 14px; }
+        .mh { padding: 14px 16px; }
+        .mf { padding: 12px 14px; gap: 8px; }
+        .mf .btn { flex: 1; padding: 10px; font-size: 13px; }
+        /* Sidebar tweaks */
+        .sidebar { width: 240px; left: -250px; }
+        .sidebar.open { left: 0; }
+        .brand-info h3 { font-size: 13px; }
+        /* Cards */
+        .card { padding: 10px; border-radius: 8px; }
+        .sc { padding: 10px; }
+        .sv { font-size: 20px; }
+        .sr { font-size: 12px; }
+        .chbox { height: 140px; }
+        /* Stat row */
+        .srow { flex-wrap: wrap; gap: 6px; }
+        .sp { min-width: 80px; padding: 8px 10px; flex: 1 1 calc(50% - 6px); }
+        .spv { font-size: 17px; }
+        .spl { font-size: 10px; }
+        /* Master tabs */
+        .mtabs { gap: 4px; }
+        .mtab { padding: 7px 10px; font-size: 12px; }
+        /* Action buttons */
+        .btn-sm-edit, .btn-sm-danger { font-size: 10px; padding: 3px 7px; }
+        /* KPI grid → 2 col */
+        .g4.kpi-grid { grid-template-columns: 1fr 1fr; }
+        /* Auth box */
+        .auth-box { padding: 24px 18px; margin: 12px; }
+        /* Toast */
+        .toast { bottom: 12px; right: 12px; left: 12px; font-size: 12px; }
+        /* g3 side card inline */
+        .sc .sl { font-size: 10px; }
+      }
+
+      /* ── RESPONSIVE: SMALL PHONES (≤380px) ── */
+      @media (max-width: 380px) {
+        .g4 { grid-template-columns: 1fr 1fr; gap: 6px; }
+        .kpi-val { font-size: 16px; }
+        .kpi-lbl { font-size: 10px; }
+        .nav-item { padding: 9px 10px; font-size: 12.5px; }
+        th, td { font-size: 10.5px; padding: 6px 6px; }
+        .topbar { height: 46px; }
+        .page-title { font-size: 14px; }
+      }
+      .card {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 16px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      }
+      .ch {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .ct {
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .cb {
+        overflow-x: auto;
+      }
+      .kpi {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 16px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        border-left: 4px solid var(--primary);
+      }
+      .kpi-val {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--primary);
+      }
+      .kpi-lbl {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .kpi-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      /* ── TABLE ── */
+      .tw {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead tr {
+        background: #f8fafc;
+      }
+      th {
+        padding: 10px 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+        border-bottom: 1.5px solid var(--border);
+      }
+      td {
+        padding: 9px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: #fafafa;
+      }
+      /* ── FILTER BAR ── */
+      .fbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .fi {
+        padding: 7px 12px;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+        background: var(--white);
+        transition: 0.2s;
+      }
+      .fi:focus {
+        border-color: var(--primary);
+      }
+      /* ── BADGE ── */
+      .badge {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .bg-green {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .bg-red {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .bg-orange {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+      .bg-blue {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .bg-gray {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      .bg-purple {
+        background: #f3e8ff;
+        color: #6b21a8;
+      }
+      /* ── SIDE CARD ── */
+      .sc {
+        background: var(--sidebar);
+        border-radius: var(--radius);
+        padding: 16px;
+        color: #fff;
+      }
+      .sl {
+        font-size: 11px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-bottom: 4px;
+      }
+      .sv {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 14px;
+      }
+      .sr {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-bottom: 1px solid #334155;
+        font-size: 13px;
+        color: #cbd5e1;
+      }
+      .sr:last-child {
+        border-bottom: none;
+      }
+      /* ── STATS ROW ── */
+      .srow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .sp {
+        background: var(--white);
+        border-radius: 8px;
+        padding: 12px 16px;
+        flex: 1;
+        min-width: 120px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      }
+      .spv {
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .spl {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      /* ── CHART BOX ── */
+      .chbox {
+        position: relative;
+        height: 180px;
+      }
+      /* ── MASTER TABS ── */
+      .mtabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .mtab {
+        padding: 8px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: var(--muted);
+        transition: 0.2s;
+      }
+      .mtab.active {
+        background: var(--primary);
+        color: #fff;
+      }
+      /* ── ACTION BUTTONS ── */
+      .btn-sm-edit {
+        padding: 4px 10px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        background: #dbeafe;
+        color: #1e40af;
+        margin-right: 4px;
+      }
+      .btn-sm-danger {
+        padding: 4px 10px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      /* ── WORKER AVATAR ── */
+      .wc {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .wav {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #fff;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      /* ── MODAL ── */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--white);
+        border-radius: 14px;
+        width: 100%;
+        max-width: 560px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        margin: 16px;
+      }
+      .mh {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .mh h3 {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: var(--muted);
+        line-height: 1;
+      }
+      .mb {
+        padding: 20px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .row.full {
+        grid-template-columns: 1fr;
+      }
+      .row label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 5px;
+      }
+      .row input,
+      .row select,
+      .row textarea {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+        font-family: inherit;
+      }
+      .row input:focus,
+      .row select:focus {
+        border-color: var(--primary);
+      }
+      .mf {
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      /* ── TOAST ── */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--sidebar);
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 9999;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 0.3s;
+        border-left: 4px solid var(--success);
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .loading {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ════════════ LOGIN SCREEN ════════════ -->
+    <div id="loginScreen">
+      <div class="auth-box">
+        <div class="auth-logo">
+          <span>🏗️</span>
+          <h2>ConstructCo</h2>
+          <p>Construction Management System</p>
+        </div>
+        <div class="auth-tabs">
+          <div
+            class="auth-tab active"
+            id="tabLogin"
+            onclick="switchAuthTab('login')"
+          >
+            Login
+          </div>
+          <div
+            class="auth-tab"
+            id="tabSignup"
+            onclick="switchAuthTab('signup')"
+          >
+            Signup
+          </div>
+        </div>
+        <div id="loginForm" class="auth-form">
+          <input id="li_email" type="email" placeholder="Email address" />
+          <input id="li_pass" type="password" placeholder="Password" />
+          <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">
+            Sign In
+          </button>
+        </div>
+        <div id="signupForm" class="auth-form" style="display: none">
+          <input id="su_name" placeholder="Full Name" />
+          <input id="su_email" type="email" placeholder="Email address" />
+          <input
+            id="su_pass"
+            type="password"
+            placeholder="Password (min 6 chars)"
+          />
+          <select id="su_role">
+            <option value="">-- Select Role --</option>
+            <option value="admin">👑 Admin – Full access + Masters</option>
+            <option value="supervisor">
+              🦺 Supervisor – Labour + Materials
+            </option>
+            <option value="engineer">
+              ⚙️ Engineer – Labour + Materials only
+            </option>
+            <option value="accountant">🗂️ Accountant – Cashbook only</option>
+          </select>
+          <button class="btn btn-primary" id="signupBtn" onclick="doSignup()">
+            Create Account
+          </button>
+          <div class="role-summary">
+            👑 Admin → Full access + Masters<br />
+            🦺 Supervisor → Labour, Materials, Cashbook (no Masters admin)<br />
+            ⚙️ Engineer → Labour + Materials only<br />
+            🗂️ Accountant → Cashbook only
+          </div>
+        </div>
+        <div id="li_err" class="auth-err"></div>
+      </div>
+    </div>
+
+    <!-- ════════════ APP WRAPPER ════════════ -->
+    <div
+      id="appWrapper"
+      style="display: none; height: 100vh; display: none; flex-direction: row"
+    >
+      <!-- SIDEBAR -->
+      <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-av">C</div>
+          <div class="brand-info">
+            <h3>ConstructCo</h3>
+            <p>Management System</p>
+          </div>
+        </div>
+        <div class="nav-section">Main</div>
+        <div
+          class="nav-item active"
+          id="navOverview"
+          onclick="showPage('overview', this)"
+        >
+          <span>🏠</span>Overview
+        </div>
+        <div class="nav-section">Operations</div>
+        <div class="nav-item" id="navLabour" onclick="showPage('labour', this)">
+          <span>👷</span>Labour
+        </div>
+        <div
+          class="nav-item"
+          id="navMaterials"
+          onclick="showPage('materials', this)"
+        >
+          <span>🧱</span>Materials
+        </div>
+        <div
+          class="nav-item"
+          id="navCashbook"
+          onclick="showPage('cashbook', this)"
+        >
+          <span>💰</span>Cashbook
+        </div>
+        <div class="nav-section">Setup</div>
+        <div
+          class="nav-item"
+          id="navMasters"
+          onclick="showPage('masters', this)"
+        >
+          <span>⚙️</span>Masters
+        </div>
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-av" id="userAv">A</div>
+            <div>
+              <div class="user-name" id="userEmail">User</div>
+              <div class="user-role" id="userRoleLbl">admin</div>
+            </div>
+          </div>
+          <button class="btn-signout" onclick="doLogout()">🚪 Sign Out</button>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="main">
+        <div class="topbar">
+          <div class="topbar-left">
+            <button
+              class="menu-btn"
+              onclick="toggleSidebar()"
+            >
+              ☰
+            </button>
+            <div>
+              <div class="page-title" id="pgT">Overview</div>
+              <div class="page-bread" id="pgB">Dashboard › Overview</div>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="date-badge">📅 <span id="todayDate"></span></div>
+            <div class="site-filter">
+              <select id="gSite" onchange="renderOverview()">
+                <option value="">All Sites</option>
+              </select>
+            </div>
+            <button class="export-btn" onclick="exportData()">↧ Export</button>
+          </div>
+        </div>
+
+        <div class="content">
+          <!-- OVERVIEW -->
+          <div class="page active" id="page-overview">
+            <div class="g4">
+              <div class="kpi">
+                <div class="kpi-val" id="ov-sites">0</div>
+                <div class="kpi-lbl">🏗️ Active Sites</div>
+                <div class="kpi-sub">Construction sites</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-val" id="ov-labour">₹0</div>
+                <div class="kpi-lbl">👷 Labour Cost (Today)</div>
+                <div class="kpi-sub" id="ov-present">0 present today</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-val" id="ov-mat">₹0</div>
+                <div class="kpi-lbl">🧱 Material Cost (All)</div>
+                <div class="kpi-sub">Total IN value</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-val" id="ov-cash">₹0</div>
+                <div class="kpi-lbl">💰 Net Cash Balance</div>
+                <div class="kpi-sub">Sent minus expenses</div>
+              </div>
+            </div>
+            <div class="g2">
+              <div class="card">
+                <div class="ch">
+                  <div class="ct">📈 Labour Cost – Last 7 Days</div>
+                </div>
+                <div class="chbox"><canvas id="trendChart"></canvas></div>
+              </div>
+              <div class="card">
+                <div class="ch"><div class="ct">🏗️ Site-wise Cost</div></div>
+                <div class="chbox"><canvas id="siteChart"></canvas></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="ch"><div class="ct">📋 Site Summary</div></div>
+              <div class="tw">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Site</th>
+                      <th>Supervisor</th>
+                      <th>Labour Cost</th>
+                      <th>Material Cost</th>
+                      <th>Cash Sent</th>
+                      <th>Expenses</th>
+                      <th>Balance</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ovTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- LABOUR -->
+          <div class="page" id="page-labour">
+            <div class="fbar">
+              <input
+                type="date"
+                class="fi"
+                id="labDate"
+                onchange="renderLabour()"
+              />
+              <select class="fi" id="labSite" onchange="renderLabour()">
+                <option value="">All Sites</option>
+              </select>
+              <select class="fi" id="labDes" onchange="renderLabour()">
+                <option value="">All Designations</option>
+                <option>Mason</option>
+                <option>Labour</option>
+                <option>Helper</option>
+                <option>Carpenter</option>
+                <option>Barbender</option>
+              </select>
+              <input
+                type="text"
+                class="fi"
+                id="labSearch"
+                placeholder="Worker name..."
+                oninput="renderLabour()"
+                style="flex: 1; min-width: 130px"
+              />
+              <button
+                class="btn btn-primary"
+                id="btnAddAttend"
+                onclick="openAttendanceModal()"
+              >
+                + Add Attendance
+              </button>
+            </div>
+            <div class="g3">
+              <div class="card" style="margin-bottom: 0">
+                <div class="ch">
+                  <div class="ct">👷 Daily Attendance</div>
+                  <div id="labPresCount" class="badge bg-green">0 Present</div>
+                </div>
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Worker</th>
+                        <th>Desig.</th>
+                        <th>Gender</th>
+                        <th>Site</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Hrs</th>
+                        <th>Wage</th>
+                        <th>Pay</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="labTable"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="sc">
+                <div class="sl">Total Pay (Filtered)</div>
+                <div class="sv" id="labTotalPay">₹0</div>
+                <div class="sr">
+                  <span>Present</span><strong id="labP">0</strong>
+                </div>
+                <div class="sr">
+                  <span>Half Day</span><strong id="labH">0</strong>
+                </div>
+                <div class="sr">
+                  <span>Absent</span><strong id="labA">0</strong>
+                </div>
+                <div class="sr">
+                  <span>Leave</span><strong id="labL">0</strong>
+                </div>
+                <div
+                  class="card"
+                  style="margin-top: 14px; margin-bottom: 0; padding: 12px"
+                >
+                  <div class="ct" style="margin-bottom: 8px">
+                    📊 Site Labour Split
+                  </div>
+                  <div class="chbox"><canvas id="labChart"></canvas></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MATERIALS -->
+          <div class="page" id="page-materials">
+            <div class="fbar">
+              <select class="fi" id="matSite" onchange="renderMaterials()">
+                <option value="">All Sites</option>
+              </select>
+              <select class="fi" id="matName" onchange="renderMaterials()">
+                <option value="">All Materials</option>
+              </select>
+              <select class="fi" id="matType" onchange="renderMaterials()">
+                <option value="">All Types</option>
+                <option>In</option>
+                <option>Out</option>
+              </select>
+              <input
+                type="date"
+                class="fi"
+                id="matDate"
+                onchange="renderMaterials()"
+              />
+              <input
+                type="text"
+                class="fi"
+                id="matSearch"
+                placeholder="Search..."
+                oninput="renderMaterials()"
+                style="flex: 1"
+              />
+              <button
+                class="btn btn-primary"
+                id="btnAddMatEntry"
+                onclick="openModal('matModal')"
+              >
+                + Add Entry
+              </button>
+            </div>
+            <div class="g3">
+              <div class="card" style="margin-bottom: 0">
+                <div class="ch"><div class="ct">🧱 Material Ledger</div></div>
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Site</th>
+                        <th>Type</th>
+                        <th>Material</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
+                        <th>Rate</th>
+                        <th>Amount</th>
+                        <th>Party/Use</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="matTable"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <div class="sc" style="margin-bottom: 14px">
+                  <div class="sl">IN Value</div>
+                  <div class="sv" id="matInVal">₹0</div>
+                  <div class="sr">
+                    <span>OUT Value</span><strong id="matOutVal">₹0</strong>
+                  </div>
+                  <div class="sr">
+                    <span>IN Entries</span><strong id="matInCnt">0</strong>
+                  </div>
+                  <div class="sr">
+                    <span>OUT Entries</span><strong id="matOutCnt">0</strong>
+                  </div>
+                </div>
+                <div class="card" style="margin-bottom: 0">
+                  <div class="ct" style="margin-bottom: 8px">📦 Stock</div>
+                  <div id="stockList" style="padding: 4px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CASHBOOK -->
+          <div class="page" id="page-cashbook">
+            <div class="fbar">
+              <select class="fi" id="cashSite" onchange="renderCash()">
+                <option value="">All Sites</option>
+              </select>
+              <select class="fi" id="cashType" onchange="renderCash()">
+                <option value="">All Types</option>
+                <option>Money Sent</option>
+                <option>Expense</option>
+              </select>
+              <select class="fi" id="cashHead" onchange="renderCash()">
+                <option value="">All Heads</option>
+                <option>Labour Payment</option>
+                <option>Material Purchase</option>
+                <option>Petty Expense</option>
+                <option>Fuel</option>
+                <option>Other</option>
+              </select>
+              <input
+                type="date"
+                class="fi"
+                id="cashFrom"
+                onchange="renderCash()"
+              />
+              <input
+                type="date"
+                class="fi"
+                id="cashTo"
+                onchange="renderCash()"
+              />
+              <input
+                type="text"
+                class="fi"
+                id="cashSearch"
+                placeholder="Search..."
+                oninput="renderCash()"
+                style="flex: 1"
+              />
+              <button
+                class="btn btn-primary"
+                id="btnAddCash"
+                onclick="openModal('cashModal')"
+              >
+                + Add Entry
+              </button>
+            </div>
+            <div class="g5">
+              <div class="sp">
+                <div class="spv" id="cashSent" style="color: var(--success)">
+                  ₹0
+                </div>
+                <div class="spl">Total Sent</div>
+              </div>
+              <div class="sp">
+                <div class="spv" id="cashExp" style="color: var(--danger)">
+                  ₹0
+                </div>
+                <div class="spl">Total Expenses</div>
+              </div>
+              <div class="sp">
+                <div class="spv" id="cashBal" style="color: var(--info)">
+                  ₹0
+                </div>
+                <div class="spl">Balance</div>
+              </div>
+              <div class="sp">
+                <div class="spv" id="cashLabPaid" style="color: var(--warning)">
+                  ₹0
+                </div>
+                <div class="spl">Labour Paid</div>
+              </div>
+              <div class="sp">
+                <div
+                  class="spv"
+                  id="cashMatBought"
+                  style="color: var(--primary)"
+                >
+                  ₹0
+                </div>
+                <div class="spl">Material Purchased</div>
+              </div>
+            </div>
+            <div class="g2">
+              <div class="card" style="margin-bottom: 0">
+                <div class="ch"><div class="ct">💰 Transactions</div></div>
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Site</th>
+                        <th>Type</th>
+                        <th>Head</th>
+                        <th>Amount</th>
+                        <th>Mode</th>
+                        <th>Party</th>
+                        <th>Notes</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cashTable"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card" style="margin-bottom: 0">
+                <div class="ch"><div class="ct">🏗️ Site Balance</div></div>
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Site</th>
+                        <th>Sent</th>
+                        <th>Expenses</th>
+                        <th>Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cashSiteTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MASTERS -->
+          <div class="page" id="page-masters">
+            <div class="mtabs">
+              <div
+                class="mtab active"
+                id="mtabSites"
+                onclick="showMaster('sites', this)"
+              >
+                🏗️ Sites
+              </div>
+              <div
+                class="mtab"
+                id="mtabWorkers"
+                onclick="showMaster('workers', this)"
+              >
+                👷 Workers
+              </div>
+              <div
+                class="mtab"
+                id="mtabMaterials"
+                onclick="showMaster('materials', this)"
+              >
+                🧱 Materials
+              </div>
+            </div>
+            <!-- SITES -->
+            <div id="ms-sites">
+              <div class="fbar">
+                <input
+                  class="fi"
+                  placeholder="Search..."
+                  oninput="renderSites(this.value)"
+                  style="flex: 1"
+                />
+                <button
+                  class="btn btn-primary"
+                  id="btnAddSite"
+                  onclick="
+                    editId = null;
+                    document.getElementById('siteModalTitle').textContent = 'Add Site';
+                    populateSiteUserDropdowns();
+                    openModal('siteModal');
+                  "
+                >
+                  + Add Site
+                </button>
+              </div>
+              <div class="card">
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Start Date</th>
+                        <th>Supervisor</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sitesTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <!-- WORKERS -->
+            <div id="ms-workers" style="display: none">
+              <div class="fbar">
+                <input
+                  class="fi"
+                  placeholder="Search..."
+                  oninput="renderWorkers(this.value)"
+                  style="flex: 1"
+                />
+                <select class="fi" id="wfSite" onchange="renderWorkers()">
+                  <option value="">All Sites</option>
+                </select>
+                <select class="fi" id="wfDes" onchange="renderWorkers()">
+                  <option value="">All Designations</option>
+                  <option>Mason</option>
+                  <option>Labour</option>
+                  <option>Helper</option>
+                  <option>Carpenter</option>
+                  <option>Barbender</option>
+                </select>
+                <button
+                  class="btn btn-primary"
+                  id="btnAddWorker"
+                  onclick="
+                    openModal('workerModal');
+                    editId = null;
+                  "
+                >
+                  + Add Worker
+                </button>
+              </div>
+              <div class="card">
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Worker</th>
+                        <th>Designation</th>
+                        <th>Gender</th>
+                        <th>Site</th>
+                        <th>Wage/Day</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="workersTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <!-- MATERIALS MASTER -->
+            <div id="ms-materials" style="display: none">
+              <div class="fbar">
+                <input
+                  class="fi"
+                  placeholder="Search..."
+                  oninput="renderMatMaster(this.value)"
+                  style="flex: 1"
+                />
+                <button
+                  class="btn btn-primary"
+                  id="btnAddMatMaster"
+                  onclick="
+                    openModal('matMasterModal');
+                    editId = null;
+                  "
+                >
+                  + Add Material
+                </button>
+              </div>
+              <div class="card">
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Unit</th>
+                        <th>Default Rate</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="matMasterTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content -->
+      </div>
+      <!-- main -->
+    </div>
+    <!-- appWrapper -->
+
+    <!-- ════════════ MODALS ════════════ -->
+    <!-- Site Modal -->
+    <div class="modal-overlay" id="siteModal">
+      <div class="modal">
+        <div class="mh">
+          <h3 id="siteModalTitle">Add Site</h3>
+          <button class="close" onclick="closeModal('siteModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="row">
+            <div>
+              <label>Site Name *</label
+              ><input id="s_name" placeholder="e.g. Arera Colony" />
+            </div>
+            <div>
+              <label>City</label><input id="s_city" placeholder="Bhopal" />
+            </div>
+          </div>
+          <div class="row full">
+            <div><label>Address</label><input id="s_addr" /></div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Start Date</label><input type="date" id="s_date" />
+            </div>
+            <div>
+              <label>Status</label
+              ><select id="s_status">
+                <option>Active</option>
+                <option>Completed</option>
+                <option>On Hold</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Supervisor</label>
+              <select id="s_sup">
+                <option value="">-- Select Supervisor --</option>
+              </select>
+            </div>
+            <div><label>Phone</label><input id="s_phone" /></div>
+          </div>
+          <div class="row full">
+            <div>
+              <label>Assign Engineers <small style="font-weight:400;color:var(--muted)">(Ctrl/Cmd = multi-select)</small></label>
+              <select id="s_engineers" multiple style="height:90px;width:100%;padding:6px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff">
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn btn-outline" onclick="closeModal('siteModal')">
+            Cancel</button
+          ><button class="btn btn-primary" onclick="saveSite()">
+            Save Site
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Worker Modal -->
+    <div class="modal-overlay" id="workerModal">
+      <div class="modal">
+        <div class="mh">
+          <h3 id="workerModalTitle">Add Worker</h3>
+          <button class="close" onclick="closeModal('workerModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="row">
+            <div><label>Name *</label><input id="w_name" /></div>
+            <div><label>Phone</label><input id="w_phone" /></div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Gender</label
+              ><select id="w_gender">
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Designation</label
+              ><select id="w_des">
+                <option>Labour</option>
+                <option>Mason</option>
+                <option>Helper</option>
+                <option>Carpenter</option>
+                <option>Barbender</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Daily Wage (₹)</label><input type="number" id="w_wage" />
+            </div>
+            <div>
+              <label>Site</label
+              ><select id="w_site"></select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Status</label
+              ><select id="w_status">
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn btn-outline" onclick="closeModal('workerModal')">
+            Cancel</button
+          ><button class="btn btn-primary" onclick="saveWorker()">
+            Save Worker
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Material Master Modal -->
+    <div class="modal-overlay" id="matMasterModal">
+      <div class="modal">
+        <div class="mh">
+          <h3 id="matMasterModalTitle">Add Material</h3>
+          <button class="close" onclick="closeModal('matMasterModal')">
+            ×
+          </button>
+        </div>
+        <div class="mb">
+          <div class="row">
+            <div><label>Name *</label><input id="mm_name" /></div>
+            <div>
+              <label>Category</label
+              ><select id="mm_cat">
+                <option>Cement</option>
+                <option>Sand</option>
+                <option>Aggregate</option>
+                <option>Steel</option>
+                <option>Bricks</option>
+                <option>Paint</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Unit</label
+              ><input id="mm_unit" placeholder="Bag / Kg / Cft" />
+            </div>
+            <div>
+              <label>Default Rate (₹)</label
+              ><input type="number" id="mm_rate" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Status</label
+              ><select id="mm_status">
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('matMasterModal')"
+          >
+            Cancel</button
+          ><button class="btn btn-primary" onclick="saveMatMaster()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Attendance Modal -->
+    <div class="modal-overlay" id="labModal">
+      <div class="modal">
+        <div class="mh">
+          <h3 id="labModalTitle">Add Attendance</h3>
+          <button class="close" onclick="closeModal('labModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="row">
+            <div><label>Date *</label><input type="date" id="l_date" /></div>
+            <div>
+              <label>Site *</label
+              ><select id="l_site" onchange="populateWorkerDropdown()"></select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Worker *</label
+              ><select id="l_worker" onchange="autoFillWorker()">
+                <option value="">-- Select Worker --</option>
+              </select>
+            </div>
+            <div>
+              <label>Designation</label
+              ><input id="l_des" readonly style="background: #f1f5f9" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Gender</label
+              ><input id="l_gender" readonly style="background: #f1f5f9" />
+            </div>
+            <div>
+              <label>Wage/Day (₹)</label><input type="number" id="l_wage" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Status *</label
+              ><select id="l_status" onchange="calcPay()">
+                <option>Present</option>
+                <option>Half Day</option>
+                <option>Absent</option>
+                <option>Leave</option>
+              </select>
+            </div>
+            <div>
+              <label>Working Hours</label
+              ><input
+                type="number"
+                id="l_hours"
+                placeholder="e.g. 8"
+                oninput="calcPay()"
+              />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Pay (₹)</label
+              ><input
+                type="number"
+                id="l_pay"
+                readonly
+                style="
+                  background: #f1f5f9;
+                  font-weight: 700;
+                  color: var(--primary);
+                "
+              />
+            </div>
+            <div><label>Remarks</label><input id="l_remarks" /></div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn btn-outline" onclick="closeModal('labModal')">
+            Cancel</button
+          ><button class="btn btn-primary" onclick="saveAttendance()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Material Entry Modal -->
+    <div class="modal-overlay" id="matModal">
+      <div class="modal">
+        <div class="mh">
+          <h3 id="matModalTitle">Add Material Entry</h3>
+          <button class="close" onclick="closeModal('matModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="row">
+            <div><label>Date *</label><input type="date" id="me_date" /></div>
+            <div>
+              <label>Site *</label
+              ><select id="me_site"></select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Type *</label
+              ><select id="me_type">
+                <option>In</option>
+                <option>Out</option>
+              </select>
+            </div>
+            <div>
+              <label>Material *</label
+              ><select id="me_mat" onchange="autoFillMat()">
+                <option value="">-- Select --</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Quantity *</label
+              ><input type="number" id="me_qty" oninput="calcMatAmt()" />
+            </div>
+            <div><label>Unit</label><input id="me_unit" /></div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Rate (₹)</label
+              ><input type="number" id="me_rate" oninput="calcMatAmt()" />
+            </div>
+            <div>
+              <label>Amount (₹)</label
+              ><input
+                type="number"
+                id="me_amt"
+                readonly
+                style="
+                  background: #f1f5f9;
+                  font-weight: 700;
+                  color: var(--primary);
+                "
+              />
+            </div>
+          </div>
+          <div class="row full">
+            <div><label>Supplier / Used For</label><input id="me_party" /></div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn btn-outline" onclick="closeModal('matModal')">
+            Cancel</button
+          ><button class="btn btn-primary" onclick="saveMatEntry()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Cash Modal -->
+    <div class="modal-overlay" id="cashModal">
+      <div class="modal">
+        <div class="mh">
+          <h3 id="cashModalTitle">Add Cash Entry</h3>
+          <button class="close" onclick="closeModal('cashModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="row">
+            <div><label>Date *</label><input type="date" id="c_date" /></div>
+            <div>
+              <label>Site *</label
+              ><select id="c_site"></select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Type *</label
+              ><select id="c_type">
+                <option>Money Sent</option>
+                <option>Expense</option>
+              </select>
+            </div>
+            <div>
+              <label>Head</label
+              ><select id="c_head">
+                <option>Labour Payment</option>
+                <option>Material Purchase</option>
+                <option>Petty Expense</option>
+                <option>Fuel</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Amount (₹) *</label><input type="number" id="c_amt" />
+            </div>
+            <div>
+              <label>Mode</label
+              ><select id="c_mode">
+                <option>Cash</option>
+                <option>UPI</option>
+                <option>Bank Transfer</option>
+                <option>Cheque</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div><label>Paid To / From</label><input id="c_party" /></div>
+            <div><label>Notes</label><input id="c_notes" /></div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn btn-outline" onclick="closeModal('cashModal')">
+            Cancel</button
+          ><button class="btn btn-primary" onclick="saveCash()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      // ── SUPABASE CREDENTIALS ──
+      const SUPABASE_URL = "https://olylorarbaizpogbbjmb.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9seWxvcmFyYmFpenBvZ2Jiam1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0ODEzMjIsImV4cCI6MjA4OTA1NzMyMn0.ESovUr-sRcrrFyLRY9g6dFeW-opcJUf0qyw_CbKBDVA";
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      let editId = null,
+        currentUserId = null,
+        currentRole = null;
+      let allowedSiteIds = null; // null = no restriction (admin/accountant)
+
+      // ── SITE ACCESS FILTER ──
+      async function loadAllowedSites(user) {
+        if (currentRole === "admin" || currentRole === "accountant") {
+          allowedSiteIds = null;
+          return;
+        }
+        const uid = user.id;
+        const { data: sites } = await sb
+          .from("sites")
+          .select("id, supervisorid, engineerids");
+        if (!sites) { allowedSiteIds = []; return; }
+        if (currentRole === "supervisor") {
+          allowedSiteIds = sites
+            .filter((s) => s.supervisorid === uid)
+            .map((s) => s.id);
+        } else if (currentRole === "engineer") {
+          allowedSiteIds = sites
+            .filter(
+              (s) => Array.isArray(s.engineerids) && s.engineerids.includes(uid)
+            )
+            .map((s) => s.id);
+        } else {
+          allowedSiteIds = null;
+        }
+      }
+      let labChart2, siteChart2, trendChart2;
+
+      // ── DATE HELPER (IST-safe, no UTC offset bug) ──
+      function getToday() {
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+        return new Date(now.getTime() - offset).toISOString().split("T")[0];
+      }
+
+      // ── PERMISSIONS ──
+      const PERMISSIONS = {
+        admin: {
+          canAddSite: true,
+          canEditSite: true,
+          canDeleteSite: true,
+          canAddWorker: true,
+          canEditWorker: true,
+          canDeleteWorker: true,
+          canAddMaterial: true,
+          canEditMaterial: true,
+          canDeleteMaterial: true,
+          canAddAttendance: true,
+          canEditAttendance: true,
+          canDeleteAttendance: true,
+          canAddMatEntry: true,
+          canEditMatEntry: true,
+          canDeleteMatEntry: true,
+          canAddCash: true,
+          canEditCash: true,
+          canDeleteCash: true,
+        },
+        supervisor: {
+          canAddSite: false,
+          canEditSite: false,
+          canDeleteSite: false,
+          canAddWorker: true,
+          canEditWorker: true,
+          canDeleteWorker: true,
+          canAddMaterial: false,
+          canEditMaterial: false,
+          canDeleteMaterial: false,
+          canAddAttendance: true,
+          canEditAttendance: true,
+          canDeleteAttendance: false,
+          canAddMatEntry: true,
+          canEditMatEntry: true,
+          canDeleteMatEntry: false,
+          canAddCash: false,
+          canEditCash: false,
+          canDeleteCash: false,
+        },
+        engineer: {
+          canAddSite: false,
+          canEditSite: false,
+          canDeleteSite: false,
+          canAddWorker: false,
+          canEditWorker: false,
+          canDeleteWorker: false,
+          canAddMaterial: false,
+          canEditMaterial: false,
+          canDeleteMaterial: false,
+          canAddAttendance: true,
+          canEditAttendance: false,
+          canDeleteAttendance: false,
+          canAddMatEntry: true,
+          canEditMatEntry: false,
+          canDeleteMatEntry: false,
+          canAddCash: false,
+          canEditCash: false,
+          canDeleteCash: false,
+        },
+        accountant: {
+          canAddSite: false,
+          canEditSite: false,
+          canDeleteSite: false,
+          canAddWorker: false,
+          canEditWorker: false,
+          canDeleteWorker: false,
+          canAddMaterial: false,
+          canEditMaterial: false,
+          canDeleteMaterial: false,
+          canAddAttendance: false,
+          canEditAttendance: false,
+          canDeleteAttendance: false,
+          canAddMatEntry: false,
+          canEditMatEntry: false,
+          canDeleteMatEntry: false,
+          canAddCash: true,
+          canEditCash: true,
+          canDeleteCash: false,
+        },
+      };
+      function can(action) {
+        const p = PERMISSIONS[currentRole];
+        return p ? p[action] : true;
+      }
+      function guard(action, label) {
+        if (!can(action)) {
+          toast(label + " — Permission denied for your role", false);
+          return false;
+        }
+        return true;
+      }
+
+      // ── PAST DATE GUARDS ──
+      function isToday(dateStr) {
+        const today = getToday(); // ✅ correctly called with ()
+        return dateStr >= today;
+      }
+      function guardPastDate(dateStr, action) {
+        if (currentRole === "admin") return true;
+        if (!isToday(dateStr)) {
+          toast(
+            "⛔ Cannot " + action + " past date records — contact Admin",
+            false,
+          );
+          return false;
+        }
+        return true;
+      }
+
+      // ── AUTH ──
+      function switchAuthTab(tab) {
+        const isLogin = tab === "login";
+        document.getElementById("loginForm").style.display = isLogin
+          ? "flex"
+          : "none";
+        document.getElementById("signupForm").style.display = isLogin
+          ? "none"
+          : "flex";
+        document.getElementById("tabLogin").classList.toggle("active", isLogin);
+        document
+          .getElementById("tabSignup")
+          .classList.toggle("active", !isLogin);
+        document.getElementById("li_err").textContent = "";
+      }
+      async function doLogin() {
+        const email = document.getElementById("li_email").value.trim();
+        const pass = document.getElementById("li_pass").value;
+        const btn = document.getElementById("loginBtn");
+        const err = document.getElementById("li_err");
+        if (!email || !pass) {
+          err.className = "auth-err err";
+          err.textContent = "Enter email and password";
+          return;
+        }
+        btn.innerHTML = '<span class="loading"></span>Signing in...';
+        btn.disabled = true;
+        const { data, error } = await sb.auth.signInWithPassword({
+          email,
+          password: pass,
+        });
+        btn.innerHTML = "Sign In";
+        btn.disabled = false;
+        if (error) {
+          err.className = "auth-err err";
+          err.textContent = error.message;
+          return;
+        }
+        currentUserId = data.user.id;
+        showApp(data.user);
+      }
+      async function doSignup() {
+        const name = document.getElementById("su_name").value.trim();
+        const email = document.getElementById("su_email").value.trim();
+        const pass = document.getElementById("su_pass").value;
+        const role = document.getElementById("su_role").value;
+        const btn = document.getElementById("signupBtn");
+        const err = document.getElementById("li_err");
+        if (!name || !email || !pass || !role) {
+          err.className = "auth-err err";
+          err.textContent = "All fields are required";
+          return;
+        }
+        if (pass.length < 6) {
+          err.className = "auth-err err";
+          err.textContent = "Password must be at least 6 characters";
+          return;
+        }
+        btn.innerHTML = '<span class="loading"></span>Creating...';
+        btn.disabled = true;
+        const { data, error } = await sb.auth.signUp({
+          email,
+          password: pass,
+          options: { data: { full_name: name, role } },
+        });
+        btn.innerHTML = "Create Account";
+        btn.disabled = false;
+        if (error) {
+          err.className = "auth-err err";
+          err.textContent = error.message;
+          return;
+        }
+        // Save profile so we can look up users by role later
+        if (data.user) {
+          await sb.from("profiles").upsert({
+            id: data.user.id,
+            full_name: name,
+            role: role,
+            email: email,
+          });
+        }
+        err.className = "auth-err ok";
+        err.textContent = "Account created! You can now login.";
+        switchAuthTab("login");
+        document.getElementById("li_email").value = email;
+      }
+      async function doLogout() {
+        await sb.auth.signOut();
+        currentUserId = null;
+        currentRole = null;
+        document.getElementById("appWrapper").style.display = "none";
+        document.getElementById("loginScreen").style.display = "flex";
+        document.getElementById("li_err").textContent = "";
+        document.getElementById("li_email").value = "";
+        document.getElementById("li_pass").value = "";
+      }
+      async function showApp(user) {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appWrapper").style.display = "flex";
+        currentRole =
+          (user.user_metadata && user.user_metadata.role) || "supervisor";
+        const name =
+          (user.user_metadata && user.user_metadata.full_name) ||
+          user.email.split("@")[0];
+        document.getElementById("userEmail").textContent = name;
+        document.getElementById("userRoleLbl").textContent = currentRole;
+        document.getElementById("userAv").textContent = name[0].toUpperCase();
+        applyRoleVisibility();
+        await loadAllowedSites(user);
+        initDashboard();
+      }
+
+      // ── ROLE VISIBILITY ──
+      function applyRoleVisibility() {
+        const r = currentRole;
+        document.getElementById("navOverview").style.display = "flex";
+        document.getElementById("navLabour").style.display =
+          r === "accountant" ? "none" : "flex";
+        document.getElementById("navMaterials").style.display =
+          r === "accountant" ? "none" : "flex";
+        document.getElementById("navCashbook").style.display =
+          r === "engineer" ? "none" : "flex";
+        document.getElementById("navMasters").style.display =
+          r === "admin" || r === "supervisor" ? "flex" : "none";
+
+        const btnMap = [
+          ["btnAddSite", "canAddSite"],
+          ["btnAddWorker", "canAddWorker"],
+          ["btnAddMatMaster", "canAddMaterial"],
+          ["btnAddAttend", "canAddAttendance"],
+          ["btnAddMatEntry", "canAddMatEntry"],
+          ["btnAddCash", "canAddCash"],
+        ];
+        btnMap.forEach(([id, perm]) => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = can(perm) ? "inline-block" : "none";
+        });
+
+        // Supervisor sees only Workers tab in Masters
+        if (r === "supervisor") {
+          const ts = document.getElementById("mtabSites");
+          const tm = document.getElementById("mtabMaterials");
+          if (ts) ts.style.display = "none";
+          if (tm) tm.style.display = "none";
+        }
+      }
+
+      // ── INIT ──
+      function initDashboard() {
+        document.getElementById("todayDate").textContent =
+          new Date().toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          });
+        const td = getToday();
+        ["labDate", "me_date", "l_date", "c_date"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = td;
+        });
+        populateAllDropdowns();
+        renderAll();
+      }
+      function renderAll() {
+        renderOverview();
+        renderLabour();
+        renderMaterials();
+        renderCash();
+        renderSites();
+        renderWorkers();
+        renderMatMaster();
+      }
+
+      // ── DB HELPERS ──
+      async function dbGet(table) {
+        let query = sb
+          .from(table)
+          .select("*")
+          .order("created_at", { ascending: false });
+        // Apply site-level access filter for supervisor / engineer
+        if (
+          allowedSiteIds !== null &&
+          ["attendance", "material_entries", "cashbook"].includes(table)
+        ) {
+          if (allowedSiteIds.length === 0) return [];
+          query = query.in("site_id", allowedSiteIds);
+        }
+        if (allowedSiteIds !== null && table === "sites") {
+          if (allowedSiteIds.length === 0) return [];
+          query = query.in("id", allowedSiteIds);
+        }
+        if (allowedSiteIds !== null && table === "workers") {
+          if (allowedSiteIds.length === 0) return [];
+          query = query.in("site_id", allowedSiteIds);
+        }
+        const { data, error } = await query;
+        if (error) {
+          console.error(table, error.message);
+          return [];
+        }
+        return data || [];
+      }
+      async function dbInsert(table, obj) {
+        obj.user_id = currentUserId;
+        const { data, error } = await sb
+          .from(table)
+          .insert(obj)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+      async function dbUpdate(table, id, obj) {
+        const { error } = await sb.from(table).update(obj).eq("id", id);
+        if (error) throw error;
+      }
+      async function dbDelete(table, id) {
+        const { error } = await sb.from(table).delete().eq("id", id);
+        if (error) throw error;
+      }
+
+      // ── DROPDOWNS ──
+      async function populateSiteUserDropdowns() {
+        const { data: profiles } = await sb
+          .from("profiles")
+          .select("id, full_name, role")
+          .in("role", ["supervisor", "engineer"]);
+        if (!profiles) return;
+        const supervisors = profiles.filter((p) => p.role === "supervisor");
+        const engineers = profiles.filter((p) => p.role === "engineer");
+        const supEl = document.getElementById("s_sup");
+        if (supEl) {
+          supEl.innerHTML =
+            `<option value="">-- Select Supervisor --</option>` +
+            supervisors
+              .map((u) => `<option value="${u.id}">${u.full_name}</option>`)
+              .join("");
+        }
+        const engEl = document.getElementById("s_engineers");
+        if (engEl) {
+          engEl.innerHTML = engineers
+            .map((u) => `<option value="${u.id}">${u.full_name}</option>`)
+            .join("");
+        }
+      }
+
+      async function populateAllDropdowns() {
+        const sites = await dbGet("sites");
+        const sOpts = sites
+          .map((s) => `<option value="${s.id}">${s.name}</option>`)
+          .join("");
+        const all = `<option value="">All Sites</option>`;
+        const sel = `<option value="">-- Select Site --</option>`;
+        ["labSite", "matSite", "cashSite", "gSite", "wfSite"].forEach((id) => {
+          const e = document.getElementById(id);
+          if (e) e.innerHTML = all + sOpts;
+        });
+        ["l_site", "me_site", "c_site", "w_site"].forEach((id) => {
+          const e = document.getElementById(id);
+          if (e) e.innerHTML = sel + sOpts;
+        });
+        const mats = await dbGet("materials_master");
+        const mn = document.getElementById("matName");
+        if (mn)
+          mn.innerHTML =
+            `<option value="">All Materials</option>` +
+            mats
+              .map((m) => `<option value="${m.name}">${m.name}</option>`)
+              .join("");
+        const mm = document.getElementById("me_mat");
+        if (mm)
+          mm.innerHTML =
+            `<option value="">-- Select --</option>` +
+            mats
+              .map(
+                (m) => `<option value="${m.id}">${m.name} (${m.unit})</option>`,
+              )
+              .join("");
+      }
+      async function populateWorkerDropdown() {
+        const siteId = document.getElementById("l_site").value;
+        const workers = await dbGet("workers");
+        const filt = workers.filter(
+          (w) => w.status === "Active" && (!siteId || w.site_id === siteId),
+        );
+        document.getElementById("l_worker").innerHTML =
+          `<option value="">-- Select Worker --</option>` +
+          filt
+            .map(
+              (w) =>
+                `<option value="${w.id}" data-wage="${w.daily_wage}" data-des="${w.designation}" data-gender="${w.gender}">${w.name}</option>`,
+            )
+            .join("");
+      }
+      function autoFillWorker() {
+        const sel = document.getElementById("l_worker");
+        const opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.value) return;
+        document.getElementById("l_des").value =
+          opt.getAttribute("data-des") || "";
+        document.getElementById("l_gender").value =
+          opt.getAttribute("data-gender") || "";
+        document.getElementById("l_wage").value =
+          opt.getAttribute("data-wage") || 0;
+        calcPay();
+      }
+      async function autoFillMat() {
+        const id = document.getElementById("me_mat").value;
+        const mats = await dbGet("materials_master");
+        const m = mats.find((x) => x.id === id);
+        if (m) {
+          document.getElementById("me_unit").value = m.unit;
+          document.getElementById("me_rate").value = m.default_rate || 0;
+          calcMatAmt();
+        }
+      }
+      function calcPay() {
+        const wage = parseFloat(document.getElementById("l_wage").value) || 0;
+        const st = document.getElementById("l_status").value;
+        document.getElementById("l_pay").value = (
+          st === "Present" ? wage : st === "Half Day" ? wage * 0.5 : 0
+        ).toFixed(2);
+      }
+      function calcMatAmt() {
+        const q = parseFloat(document.getElementById("me_qty").value) || 0;
+        const r = parseFloat(document.getElementById("me_rate").value) || 0;
+        document.getElementById("me_amt").value = (q * r).toFixed(2);
+      }
+
+      // ── MODAL HELPERS ──
+      function openModal(id) {
+        document.getElementById(id).classList.add("open");
+      }
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+        editId = null;
+      }
+      function toast(msg, ok = true) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.style.borderLeftColor = ok ? "var(--success)" : "var(--danger)";
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2800);
+      }
+      function fmt(n) {
+        return "₹" + (n || 0).toLocaleString("en-IN");
+      }
+      function fmtF(n) {
+        return "₹" + parseFloat(n || 0).toLocaleString("en-IN");
+      }
+      function strCol(name) {
+        const colors = [
+          "#f97316",
+          "#3b82f6",
+          "#22c55e",
+          "#8b5cf6",
+          "#ef4444",
+          "#f59e0b",
+          "#06b6d4",
+          "#ec4899",
+        ];
+        let hash = 0;
+        for (let c of name || "") hash = c.charCodeAt(0) + ((hash << 5) - hash);
+        return colors[Math.abs(hash) % colors.length];
+      }
+
+      // ── ATTENDANCE MODAL ──
+      function openAttendanceModal() {
+        editId = null;
+        const today = getToday(); // ✅ properly store result
+        const dateInput = document.getElementById("l_date");
+        dateInput.value = today;
+
+        if (currentRole !== "admin") {
+          dateInput.min = today;
+          dateInput.max = today;
+          dateInput.readOnly = true;
+          dateInput.style.background = "#f1f5f9";
+          dateInput.style.cursor = "not-allowed";
+        } else {
+          dateInput.min = "";
+          dateInput.max = "";
+          dateInput.readOnly = false;
+          dateInput.style.background = "";
+          dateInput.style.cursor = "";
+        }
+        document.getElementById("l_site").value = "";
+        document.getElementById("l_worker").innerHTML =
+          '<option value="">-- Select Worker --</option>';
+        document.getElementById("l_des").value = "";
+        document.getElementById("l_gender").value = "";
+        document.getElementById("l_wage").value = "";
+        document.getElementById("l_hours").value = "";
+        document.getElementById("l_pay").value = "";
+        document.getElementById("l_remarks").value = "";
+        document.getElementById("l_status").value = "Present";
+        document.getElementById("labModalTitle").textContent = "Add Attendance";
+        populateAllDropdowns();
+        openModal("labModal");
+      }
+
+      // ════════════ SITES ════════════
+      async function saveSite() {
+        if (editId && !guard("canEditSite", "Admin only")) return;
+        if (!editId && !guard("canAddSite", "Admin only")) return;
+        const name = document.getElementById("s_name").value.trim();
+        if (!name) {
+          toast("Site name is required", false);
+          return;
+        }
+        const supEl = document.getElementById("s_sup");
+        const engEl = document.getElementById("s_engineers");
+        const supervisorId = supEl.value || null;
+        const supervisorName = supEl.options[supEl.selectedIndex]?.text || "";
+        const engineerIds = engEl ? Array.from(engEl.selectedOptions).map((o) => o.value) : [];
+        const obj = {
+          name,
+          city: document.getElementById("s_city").value,
+          addr: document.getElementById("s_addr").value,
+          start_date: document.getElementById("s_date").value || null,
+          status: document.getElementById("s_status").value,
+          supervisor: supervisorName,
+          supervisorid: supervisorId,
+          engineerids: engineerIds,
+          phone: document.getElementById("s_phone").value,
+        };
+        try {
+          if (editId) await dbUpdate("sites", editId, obj);
+          else await dbInsert("sites", obj);
+          closeModal("siteModal");
+          populateAllDropdowns();
+          renderSites();
+          renderOverview();
+          toast(editId ? "Site updated!" : "Site added!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+      async function editSite(id) {
+        if (!guard("canEditSite", "Admin only")) return;
+        editId = id;
+        const sites = await dbGet("sites");
+        const s = sites.find((x) => x.id === id);
+        if (!s) return;
+        document.getElementById("siteModalTitle").textContent = "Edit Site";
+        document.getElementById("s_name").value = s.name;
+        document.getElementById("s_city").value = s.city || "";
+        document.getElementById("s_addr").value = s.addr || "";
+        document.getElementById("s_date").value = s.start_date || "";
+        document.getElementById("s_status").value = s.status || "Active";
+        document.getElementById("s_sup").value = s.supervisor || "";
+        document.getElementById("s_phone").value = s.phone || "";
+        openModal("siteModal");
+      }
+      async function deleteSite(id) {
+        if (!guard("canDeleteSite", "Admin only")) return;
+        if (!confirm("Delete this site?")) return;
+        try {
+          await dbDelete("sites", id);
+          populateAllDropdowns();
+          renderSites();
+          renderOverview();
+          toast("Site deleted!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+
+      // ════════════ WORKERS ════════════
+      async function saveWorker() {
+        if (editId && !guard("canEditWorker", "Cannot edit worker")) return;
+        if (!editId && !guard("canAddWorker", "Cannot add worker")) return;
+        const name = document.getElementById("w_name").value.trim();
+        if (!name) {
+          toast("Worker name required", false);
+          return;
+        }
+        const obj = {
+          name,
+          phone: document.getElementById("w_phone").value,
+          gender: document.getElementById("w_gender").value,
+          designation: document.getElementById("w_des").value,
+          daily_wage: parseFloat(document.getElementById("w_wage").value) || 0,
+          site_id: document.getElementById("w_site").value || null,
+          status: document.getElementById("w_status").value,
+        };
+        try {
+          if (editId) await dbUpdate("workers", editId, obj);
+          else await dbInsert("workers", obj);
+          closeModal("workerModal");
+          renderWorkers();
+          toast(editId ? "Worker updated!" : "Worker added!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+      async function editWorker(id) {
+        if (!guard("canEditWorker", "Cannot edit worker")) return;
+        const workers = await dbGet("workers");
+        const w = workers.find((x) => x.id === id);
+        if (!w) return;
+        if (currentRole !== "admin") {
+          const today = getToday(); // ✅ correctly stored
+          const addedDate = w.created_at ? w.created_at.split("T")[0] : "";
+          if (addedDate !== today) {
+            toast(
+              "⛔ Can only edit workers added today — contact Admin",
+              false,
+            );
+            return;
+          }
+        }
+        editId = id;
+        await populateAllDropdowns();
+        document.getElementById("workerModalTitle").textContent = "Edit Worker";
+        document.getElementById("w_name").value = w.name;
+        document.getElementById("w_phone").value = w.phone || "";
+        document.getElementById("w_gender").value = w.gender || "Male";
+        document.getElementById("w_des").value = w.designation || "Labour";
+        document.getElementById("w_wage").value = w.daily_wage || 0;
+        document.getElementById("w_site").value = w.site_id || "";
+        document.getElementById("w_status").value = w.status || "Active";
+        openModal("workerModal");
+      }
+      async function deleteWorker(id) {
+        if (!guard("canDeleteWorker", "Cannot delete worker")) return;
+        const workers = await dbGet("workers");
+        const w = workers.find((x) => x.id === id);
+        if (!w) return;
+        if (currentRole !== "admin") {
+          const today = getToday(); // ✅ correctly stored
+          const addedDate = w.created_at ? w.created_at.split("T")[0] : "";
+          if (addedDate !== today) {
+            toast(
+              "⛔ Can only delete workers added today — contact Admin",
+              false,
+            );
+            return;
+          }
+        }
+        if (!confirm("Delete worker?")) return;
+        try {
+          await dbDelete("workers", id);
+          renderWorkers();
+          toast("Worker deleted!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+
+      // ════════════ MATERIAL MASTER ════════════
+      async function saveMatMaster() {
+        if (editId && !guard("canEditMaterial", "Admin only")) return;
+        if (!editId && !guard("canAddMaterial", "Admin only")) return;
+        const name = document.getElementById("mm_name").value.trim();
+        if (!name) {
+          toast("Material name required", false);
+          return;
+        }
+        const obj = {
+          name,
+          category: document.getElementById("mm_cat").value,
+          unit: document.getElementById("mm_unit").value,
+          default_rate:
+            parseFloat(document.getElementById("mm_rate").value) || 0,
+          status: document.getElementById("mm_status").value,
+        };
+        try {
+          if (editId) await dbUpdate("materials_master", editId, obj);
+          else await dbInsert("materials_master", obj);
+          closeModal("matMasterModal");
+          populateAllDropdowns();
+          renderMatMaster();
+          toast(editId ? "Updated!" : "Material added!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+      async function editMatMaster(id) {
+        if (!guard("canEditMaterial", "Admin only")) return;
+        editId = id;
+        const mats = await dbGet("materials_master");
+        const m = mats.find((x) => x.id === id);
+        if (!m) return;
+        document.getElementById("matMasterModalTitle").textContent =
+          "Edit Material";
+        document.getElementById("mm_name").value = m.name;
+        document.getElementById("mm_cat").value = m.category || "Cement";
+        document.getElementById("mm_unit").value = m.unit || "";
+        document.getElementById("mm_rate").value = m.default_rate || 0;
+        document.getElementById("mm_status").value = m.status || "Active";
+        openModal("matMasterModal");
+      }
+      async function deleteMatMaster(id) {
+        if (!guard("canDeleteMaterial", "Admin only")) return;
+        if (!confirm("Delete material?")) return;
+        try {
+          await dbDelete("materials_master", id);
+          populateAllDropdowns();
+          renderMatMaster();
+          toast("Deleted!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+
+      // ════════════ ATTENDANCE ════════════
+      async function saveAttendance() {
+        if (editId && !guard("canEditAttendance", "Cannot edit attendance"))
+          return;
+        if (!editId && !guard("canAddAttendance", "Cannot add attendance"))
+          return;
+        const date = document.getElementById("l_date").value;
+        const siteId = document.getElementById("l_site").value;
+        const workerId = document.getElementById("l_worker").value;
+        if (!date || !siteId || !workerId) {
+          toast("Date, site and worker required", false);
+          return;
+        }
+        if (!guardPastDate(date, "add attendance for")) return; // ✅ blocks past dates for non-admin
+        const sites = await dbGet("sites");
+        const s = sites.find((x) => x.id === siteId);
+        const sel = document.getElementById("l_worker");
+        const opt = sel.options[sel.selectedIndex];
+        const obj = {
+          date,
+          site_id: siteId,
+          site_name: s ? s.name : "",
+          worker_id: workerId,
+          worker_name: opt ? opt.text : "",
+          designation: document.getElementById("l_des").value,
+          gender: document.getElementById("l_gender").value,
+          wage: parseFloat(document.getElementById("l_wage").value) || 0,
+          status: document.getElementById("l_status").value,
+          hours: document.getElementById("l_hours").value || null,
+          pay: parseFloat(document.getElementById("l_pay").value) || 0,
+          remarks: document.getElementById("l_remarks").value,
+        };
+        try {
+          if (editId) await dbUpdate("attendance", editId, obj);
+          else await dbInsert("attendance", obj);
+          closeModal("labModal");
+          renderLabour();
+          renderOverview();
+          toast(editId ? "Updated!" : "Attendance saved!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+      async function editAttendance(id) {
+        if (!guard("canEditAttendance", "Cannot edit attendance")) return;
+        const entries = await dbGet("attendance");
+        const e = entries.find((x) => x.id === id);
+        if (!e) return;
+        if (!guardPastDate(e.date, "edit")) return;
+        editId = id;
+        await populateAllDropdowns();
+        document.getElementById("labModalTitle").textContent =
+          "Edit Attendance";
+        document.getElementById("l_date").value = e.date;
+        document.getElementById("l_site").value = e.site_id;
+        await populateWorkerDropdown();
+        document.getElementById("l_worker").value = e.worker_id;
+        document.getElementById("l_des").value = e.designation || "";
+        document.getElementById("l_gender").value = e.gender || "";
+        document.getElementById("l_wage").value = e.wage || 0;
+        document.getElementById("l_status").value = e.status || "Present";
+        document.getElementById("l_hours").value = e.hours || "";
+        document.getElementById("l_pay").value = e.pay || 0;
+        document.getElementById("l_remarks").value = e.remarks || "";
+
+        // Lock date for non-admin
+        const dateInput = document.getElementById("l_date");
+        if (currentRole !== "admin") {
+          const today = getToday();
+          dateInput.min = today;
+          dateInput.max = today;
+          dateInput.readOnly = true;
+          dateInput.style.background = "#f1f5f9";
+          dateInput.style.cursor = "not-allowed";
+        } else {
+          dateInput.min = "";
+          dateInput.max = "";
+          dateInput.readOnly = false;
+          dateInput.style.background = "";
+          dateInput.style.cursor = "";
+        }
+        openModal("labModal");
+      }
+      async function deleteAttendance(id) {
+        if (!guard("canDeleteAttendance", "Only Admin can delete attendance"))
+          return;
+        if (!confirm("Delete entry?")) return;
+        try {
+          await dbDelete("attendance", id);
+          renderLabour();
+          renderOverview();
+          toast("Deleted!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+
+      // ════════════ MATERIAL ENTRIES ════════════
+      async function saveMatEntry() {
+        if (editId && !guard("canEditMatEntry", "Cannot edit material entries"))
+          return;
+        if (!editId && !guard("canAddMatEntry", "Cannot add material entries"))
+          return;
+        const date = document.getElementById("me_date").value;
+        const siteId = document.getElementById("me_site").value;
+        const matId = document.getElementById("me_mat").value;
+        if (!date || !siteId || !matId) {
+          toast("Date, site and material required", false);
+          return;
+        }
+        if (!guardPastDate(date, "add material entry for")) return;
+        const sites = await dbGet("sites");
+        const s = sites.find((x) => x.id === siteId);
+        const mats = await dbGet("materials_master");
+        const m = mats.find((x) => x.id === matId);
+        const obj = {
+          date,
+          site_id: siteId,
+          site_name: s ? s.name : "",
+          material_id: matId,
+          material_name: m ? m.name : "",
+          type: document.getElementById("me_type").value,
+          qty: parseFloat(document.getElementById("me_qty").value) || 0,
+          unit: document.getElementById("me_unit").value,
+          rate: parseFloat(document.getElementById("me_rate").value) || 0,
+          amount: parseFloat(document.getElementById("me_amt").value) || 0,
+          party: document.getElementById("me_party").value,
+        };
+        try {
+          if (editId) await dbUpdate("material_entries", editId, obj);
+          else await dbInsert("material_entries", obj);
+          closeModal("matModal");
+          renderMaterials();
+          renderOverview();
+          toast(editId ? "Updated!" : "Entry saved!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+      async function editMatEntry(id) {
+        if (!guard("canEditMatEntry", "Cannot edit material entries")) return;
+        const entries = await dbGet("material_entries");
+        const e = entries.find((x) => x.id === id);
+        if (!e) return;
+        if (!guardPastDate(e.date, "edit")) return;
+        editId = id;
+        await populateAllDropdowns();
+        document.getElementById("matModalTitle").textContent =
+          "Edit Material Entry";
+        document.getElementById("me_date").value = e.date;
+        document.getElementById("me_site").value = e.site_id;
+        document.getElementById("me_type").value = e.type;
+        document.getElementById("me_mat").value = e.material_id;
+        document.getElementById("me_qty").value = e.qty;
+        document.getElementById("me_unit").value = e.unit;
+        document.getElementById("me_rate").value = e.rate;
+        document.getElementById("me_amt").value = e.amount;
+        document.getElementById("me_party").value = e.party || "";
+        openModal("matModal");
+      }
+      async function deleteMatEntry(id) {
+        if (
+          !guard("canDeleteMatEntry", "Only Admin can delete material entries")
+        )
+          return;
+        if (!confirm("Delete entry?")) return;
+        try {
+          await dbDelete("material_entries", id);
+          renderMaterials();
+          renderOverview();
+          toast("Deleted!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+
+      // ════════════ CASHBOOK ════════════
+      async function saveCash() {
+        if (editId && !guard("canEditCash", "Cannot edit cash entries")) return;
+        if (!editId && !guard("canAddCash", "Cannot add cash entries")) return;
+        const date = document.getElementById("c_date").value;
+        const siteId = document.getElementById("c_site").value;
+        const amt = parseFloat(document.getElementById("c_amt").value) || 0;
+        if (!date || !siteId || !amt) {
+          toast("Date, site and amount required", false);
+          return;
+        }
+        const sites = await dbGet("sites");
+        const s = sites.find((x) => x.id === siteId);
+        const obj = {
+          date,
+          site_id: siteId,
+          site_name: s ? s.name : "",
+          type: document.getElementById("c_type").value,
+          head: document.getElementById("c_head").value,
+          amount: amt,
+          mode: document.getElementById("c_mode").value,
+          party: document.getElementById("c_party").value,
+          notes: document.getElementById("c_notes").value,
+        };
+        try {
+          if (editId) await dbUpdate("cashbook", editId, obj);
+          else await dbInsert("cashbook", obj);
+          closeModal("cashModal");
+          renderCash();
+          renderOverview();
+          toast(editId ? "Updated!" : "Cash entry saved!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+      async function editCash(id) {
+        if (!guard("canEditCash", "Cannot edit cash entries")) return;
+        editId = id;
+        const entries = await dbGet("cashbook");
+        const e = entries.find((x) => x.id === id);
+        if (!e) return;
+        await populateAllDropdowns();
+        document.getElementById("cashModalTitle").textContent =
+          "Edit Cash Entry";
+        document.getElementById("c_date").value = e.date;
+        document.getElementById("c_site").value = e.site_id;
+        document.getElementById("c_type").value = e.type;
+        document.getElementById("c_head").value = e.head;
+        document.getElementById("c_amt").value = e.amount;
+        document.getElementById("c_mode").value = e.mode || "Cash";
+        document.getElementById("c_party").value = e.party || "";
+        document.getElementById("c_notes").value = e.notes || "";
+        openModal("cashModal");
+      }
+      async function deleteCash(id) {
+        if (!guard("canDeleteCash", "Only Admin can delete cash entries"))
+          return;
+        if (!confirm("Delete entry?")) return;
+        try {
+          await dbDelete("cashbook", id);
+          renderCash();
+          renderOverview();
+          toast("Deleted!");
+        } catch (e) {
+          toast("Error: " + e.message, false);
+        }
+      }
+
+      // ════════════ RENDER OVERVIEW ════════════
+      async function renderOverview() {
+        const gSite = document.getElementById("gSite").value;
+        const [sites, attend, mats, cash] = await Promise.all([
+          dbGet("sites"),
+          dbGet("attendance"),
+          dbGet("material_entries"),
+          dbGet("cashbook"),
+        ]);
+        const today = getToday();
+        document.getElementById("ov-sites").textContent = sites.filter(
+          (s) => s.status === "Active",
+        ).length;
+        const todayLab = attend.filter(
+          (a) => a.date === today && (!gSite || a.site_id === gSite),
+        );
+        const labCost = todayLab.reduce((s, a) => s + (a.pay || 0), 0);
+        document.getElementById("ov-labour").textContent = fmt(labCost);
+        document.getElementById("ov-present").textContent =
+          todayLab.filter((a) => a.status === "Present").length +
+          " present today";
+        const matIn = mats
+          .filter((m) => m.type === "In" && (!gSite || m.site_id === gSite))
+          .reduce((s, m) => s + (m.amount || 0), 0);
+        document.getElementById("ov-mat").textContent = fmt(matIn);
+        const cashD = cash.filter((c) => !gSite || c.site_id === gSite);
+        const bal =
+          cashD
+            .filter((c) => c.type === "Money Sent")
+            .reduce((s, c) => s + (c.amount || 0), 0) -
+          cashD
+            .filter((c) => c.type === "Expense")
+            .reduce((s, c) => s + (c.amount || 0), 0);
+        const bEl = document.getElementById("ov-cash");
+        bEl.textContent = fmt(Math.abs(bal));
+        bEl.style.color = bal >= 0 ? "var(--success)" : "var(--danger)";
+
+        // Site Summary Table
+        document.getElementById("ovTable").innerHTML =
+          sites
+            .map((s) => {
+              const sL = attend
+                .filter((a) => a.site_id === s.id)
+                .reduce((t, a) => t + (a.pay || 0), 0);
+              const sM = mats
+                .filter((m) => m.site_id === s.id && m.type === "In")
+                .reduce((t, m) => t + (m.amount || 0), 0);
+              const sSent = cash
+                .filter((c) => c.site_id === s.id && c.type === "Money Sent")
+                .reduce((t, c) => t + (c.amount || 0), 0);
+              const sExp = cash
+                .filter((c) => c.site_id === s.id && c.type === "Expense")
+                .reduce((t, c) => t + (c.amount || 0), 0);
+              const sBal = sSent - sExp;
+              const sc = {
+                Active: "bg-green",
+                "On Hold": "bg-orange",
+                Completed: "bg-gray",
+              };
+              return `<tr><td><strong>${s.name}</strong></td><td>${s.supervisor || "–"}</td><td>${fmt(sL)}</td><td>${fmt(sM)}</td><td>${fmt(sSent)}</td><td>${fmt(sExp)}</td><td style="color:${sBal >= 0 ? "var(--success)" : "var(--danger)"}">${fmt(sBal)}</td><td><span class="badge ${sc[s.status] || "bg-gray"}">${s.status}</span></td></tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No sites yet.</td></tr>';
+
+        // Trend Chart (last 7 days)
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(new Date().getTime() - i * 86400000);
+          days.push(d.toISOString().split("T")[0]);
+        }
+        const dLabels = days.map((d) => d.slice(5));
+        const dData = days.map((d) =>
+          attend
+            .filter((a) => a.date === d)
+            .reduce((s, a) => s + (a.pay || 0), 0),
+        );
+        if (trendChart2) trendChart2.destroy();
+        trendChart2 = new Chart(
+          document.getElementById("trendChart").getContext("2d"),
+          {
+            type: "line",
+            data: {
+              labels: dLabels,
+              datasets: [
+                {
+                  label: "Labour Cost",
+                  data: dData,
+                  borderColor: "#f97316",
+                  backgroundColor: "rgba(249,115,22,.1)",
+                  fill: true,
+                  tension: 0.4,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true } },
+            },
+          },
+        );
+
+        // Site Bar Chart
+        const siteCosts = sites.map((s) => ({
+          name: s.name,
+          cost: attend
+            .filter((a) => a.site_id === s.id)
+            .reduce((t, a) => t + (a.pay || 0), 0),
+        }));
+        if (siteChart2) siteChart2.destroy();
+        siteChart2 = new Chart(
+          document.getElementById("siteChart").getContext("2d"),
+          {
+            type: "bar",
+            data: {
+              labels: siteCosts.map((s) => s.name),
+              datasets: [
+                {
+                  label: "Labour Cost",
+                  data: siteCosts.map((s) => s.cost),
+                  backgroundColor: "#f97316",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true } },
+            },
+          },
+        );
+      }
+
+      // ════════════ RENDER LABOUR ════════════
+      async function renderLabour() {
+        const date = document.getElementById("labDate").value,
+          site = document.getElementById("labSite").value;
+        const des = document.getElementById("labDes").value,
+          search = document.getElementById("labSearch").value.toLowerCase();
+        let E = await dbGet("attendance");
+        if (date) E = E.filter((e) => e.date === date);
+        if (site) E = E.filter((e) => e.site_id === site);
+        if (des) E = E.filter((e) => e.designation === des);
+        if (search)
+          E = E.filter((e) =>
+            (e.worker_name || "").toLowerCase().includes(search),
+          );
+        E.sort((a, b) => b.date.localeCompare(a.date));
+        const total = E.reduce((s, e) => s + (e.pay || 0), 0);
+        const p = E.filter((e) => e.status === "Present").length;
+        document.getElementById("labTotalPay").textContent = fmtF(total);
+        document.getElementById("labP").textContent = p;
+        document.getElementById("labH").textContent = E.filter(
+          (e) => e.status === "Half Day",
+        ).length;
+        document.getElementById("labA").textContent = E.filter(
+          (e) => e.status === "Absent",
+        ).length;
+        document.getElementById("labL").textContent = E.filter(
+          (e) => e.status === "Leave",
+        ).length;
+        document.getElementById("labPresCount").textContent = p + " Present";
+        const dB = {
+          Mason: "bg-blue",
+          Labour: "bg-gray",
+          Helper: "bg-orange",
+          Carpenter: "bg-purple",
+          Barbender: "bg-green",
+        };
+        const sB = {
+          Present: "bg-green",
+          "Half Day": "bg-orange",
+          Absent: "bg-red",
+          Leave: "bg-gray",
+        };
+        const canEdit = can("canEditAttendance"),
+          canDel = can("canDeleteAttendance");
+        document.getElementById("labTable").innerHTML =
+          E.map(
+            (e) => `<tr>
+    <td><div class="wc"><div class="wav" style="background:${strCol(e.worker_name)}">${(e.worker_name || "?")[0].toUpperCase()}</div><strong>${e.worker_name || ""}</strong></div></td>
+    <td><span class="badge ${dB[e.designation] || "bg-gray"}">${e.designation || ""}</span></td>
+    <td>${e.gender || ""}</td><td>${e.site_name || ""}</td><td>${e.date || ""}</td>
+    <td><span class="badge ${sB[e.status] || "bg-gray"}">${e.status || ""}</span></td>
+    <td>${e.hours || "–"}</td><td>${fmtF(e.wage)}</td><td><strong style="color:var(--primary)">${fmtF(e.pay)}</strong></td><td>${e.remarks || "–"}</td>
+    <td style="white-space:nowrap">${canEdit ? `<button class="btn-sm-edit" onclick="editAttendance('${e.id}')">✏️</button>` : ""}${canDel ? `<button class="btn-sm-danger" onclick="deleteAttendance('${e.id}')">🗑</button>` : ""}</td>
+  </tr>`,
+          ).join("") ||
+          '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">No records. Click "+ Add Attendance".</td></tr>';
+
+        // Doughnut chart
+        const sites = await dbGet("sites"),
+          allA = await dbGet("attendance");
+        if (labChart2) labChart2.destroy();
+        labChart2 = new Chart(
+          document.getElementById("labChart").getContext("2d"),
+          {
+            type: "doughnut",
+            data: {
+              labels: sites.map((s) => s.name),
+              datasets: [
+                {
+                  data: sites.map((s) =>
+                    allA
+                      .filter((a) => a.site_id === s.id)
+                      .reduce((t, a) => t + (a.pay || 0), 0),
+                  ),
+                  backgroundColor: [
+                    "#f97316",
+                    "#3b82f6",
+                    "#22c55e",
+                    "#8b5cf6",
+                    "#f59e0b",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { position: "bottom" } },
+            },
+          },
+        );
+      }
+
+      // ════════════ RENDER MATERIALS ════════════
+      async function renderMaterials() {
+        const site = document.getElementById("matSite").value,
+          name = document.getElementById("matName").value;
+        const type = document.getElementById("matType").value,
+          date = document.getElementById("matDate").value;
+        const search = document.getElementById("matSearch").value.toLowerCase();
+        let E = await dbGet("material_entries");
+        if (site) E = E.filter((e) => e.site_id === site);
+        if (name) E = E.filter((e) => e.material_name === name);
+        if (type) E = E.filter((e) => e.type === type);
+        if (date) E = E.filter((e) => e.date === date);
+        if (search)
+          E = E.filter(
+            (e) =>
+              (e.material_name || "").toLowerCase().includes(search) ||
+              (e.party || "").toLowerCase().includes(search),
+          );
+        const inVal = E.filter((e) => e.type === "In").reduce(
+          (s, e) => s + (e.amount || 0),
+          0,
+        );
+        const outVal = E.filter((e) => e.type === "Out").reduce(
+          (s, e) => s + (e.amount || 0),
+          0,
+        );
+        document.getElementById("matInVal").textContent = fmtF(inVal);
+        document.getElementById("matOutVal").textContent = fmtF(outVal);
+        document.getElementById("matInCnt").textContent = E.filter(
+          (e) => e.type === "In",
+        ).length;
+        document.getElementById("matOutCnt").textContent = E.filter(
+          (e) => e.type === "Out",
+        ).length;
+        const canEdit = can("canEditMatEntry"),
+          canDel = can("canDeleteMatEntry");
+        document.getElementById("matTable").innerHTML =
+          E.map(
+            (e) => `<tr>
+    <td>${e.date || ""}</td><td>${e.site_name || ""}</td>
+    <td><span class="badge ${e.type === "In" ? "bg-green" : "bg-orange"}">${e.type}</span></td>
+    <td><strong>${e.material_name || ""}</strong></td><td>${e.qty || 0}</td><td>${e.unit || ""}</td>
+    <td>${fmtF(e.rate)}</td><td><strong>${fmtF(e.amount)}</strong></td><td>${e.party || ""}</td>
+    <td style="white-space:nowrap">${canEdit ? `<button class="btn-sm-edit" onclick="editMatEntry('${e.id}')">✏️</button>` : ""}${canDel ? `<button class="btn-sm-danger" onclick="deleteMatEntry('${e.id}')">🗑</button>` : ""}</td>
+  </tr>`,
+          ).join("") ||
+          '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">No entries.</td></tr>';
+
+        // Stock summary
+        const allE = await dbGet("material_entries");
+        const mMast = await dbGet("materials_master");
+        document.getElementById("stockList").innerHTML =
+          mMast
+            .map((m) => {
+              const inQ = allE
+                .filter((e) => e.material_id === m.id && e.type === "In")
+                .reduce((s, e) => s + (e.qty || 0), 0);
+              const outQ = allE
+                .filter((e) => e.material_id === m.id && e.type === "Out")
+                .reduce((s, e) => s + (e.qty || 0), 0);
+              const net = inQ - outQ;
+              const pct = inQ > 0 ? Math.round((net / inQ) * 100) : 0;
+              return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span><strong>${m.name}</strong></span><span>${net} ${m.unit}</span></div><div style="background:#f1f5f9;border-radius:4px;height:6px"><div style="background:var(--primary);width:${pct}%;height:100%;border-radius:4px"></div></div></div>`;
+            })
+            .join("") ||
+          '<p style="color:var(--muted);font-size:13px;text-align:center;padding:12px">No materials.</p>';
+      }
+
+      // ════════════ RENDER CASHBOOK ════════════
+      async function renderCash() {
+        const site = document.getElementById("cashSite").value,
+          type = document.getElementById("cashType").value;
+        const head = document.getElementById("cashHead").value,
+          from = document.getElementById("cashFrom").value;
+        const to = document.getElementById("cashTo").value,
+          search = document.getElementById("cashSearch").value.toLowerCase();
+        let E = await dbGet("cashbook");
+        if (site) E = E.filter((e) => e.site_id === site);
+        if (type) E = E.filter((e) => e.type === type);
+        if (head) E = E.filter((e) => e.head === head);
+        if (from) E = E.filter((e) => e.date >= from);
+        if (to) E = E.filter((e) => e.date <= to);
+        if (search)
+          E = E.filter(
+            (e) =>
+              (e.site_name || "").toLowerCase().includes(search) ||
+              (e.party || "").toLowerCase().includes(search),
+          );
+        E.sort((a, b) => b.date.localeCompare(a.date));
+        const sent = E.filter((e) => e.type === "Money Sent").reduce(
+          (s, e) => s + (e.amount || 0),
+          0,
+        );
+        const exp = E.filter((e) => e.type === "Expense").reduce(
+          (s, e) => s + (e.amount || 0),
+          0,
+        );
+        document.getElementById("cashSent").textContent = fmtF(sent);
+        document.getElementById("cashExp").textContent = fmtF(exp);
+        document.getElementById("cashBal").textContent = fmtF(sent - exp);
+        document.getElementById("cashLabPaid").textContent = fmtF(
+          E.filter((e) => e.head === "Labour Payment").reduce(
+            (s, e) => s + (e.amount || 0),
+            0,
+          ),
+        );
+        document.getElementById("cashMatBought").textContent = fmtF(
+          E.filter((e) => e.head === "Material Purchase").reduce(
+            (s, e) => s + (e.amount || 0),
+            0,
+          ),
+        );
+        const canEdit = can("canEditCash"),
+          canDel = can("canDeleteCash");
+        document.getElementById("cashTable").innerHTML =
+          E.map(
+            (e) => `<tr>
+    <td>${e.date || ""}</td><td>${e.site_name || ""}</td>
+    <td><span class="badge ${e.type === "Money Sent" ? "bg-green" : "bg-red"}">${e.type === "Money Sent" ? "Sent" : "Exp"}</span></td>
+    <td>${e.head || ""}</td>
+    <td><strong style="color:${e.type === "Money Sent" ? "var(--success)" : "var(--danger)"}">${e.type === "Money Sent" ? "+" : "-"}${fmtF(e.amount)}</strong></td>
+    <td><span class="badge bg-blue">${e.mode || ""}</span></td><td>${e.party || ""}</td><td>${e.notes || ""}</td>
+    <td style="white-space:nowrap">${canEdit ? `<button class="btn-sm-edit" onclick="editCash('${e.id}')">✏️</button>` : ""}${canDel ? `<button class="btn-sm-danger" onclick="deleteCash('${e.id}')">🗑</button>` : ""}</td>
+  </tr>`,
+          ).join("") ||
+          '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">No entries. Click "+ Add Entry".</td></tr>';
+
+        // Site balance
+        const sites = await dbGet("sites"),
+          allC = await dbGet("cashbook");
+        document.getElementById("cashSiteTable").innerHTML =
+          sites
+            .map((s) => {
+              const sS = allC
+                .filter((c) => c.site_id === s.id && c.type === "Money Sent")
+                .reduce((t, c) => t + (c.amount || 0), 0);
+              const sE = allC
+                .filter((c) => c.site_id === s.id && c.type === "Expense")
+                .reduce((t, c) => t + (c.amount || 0), 0);
+              const sB = sS - sE;
+              return `<tr><td><strong>${s.name}</strong></td><td style="color:var(--success)">${fmtF(sS)}</td><td style="color:var(--danger)">${fmtF(sE)}</td><td style="color:${sB >= 0 ? "var(--success)" : "var(--danger)"}">${fmtF(sB)}</td></tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">No sites.</td></tr>';
+      }
+
+      // ════════════ RENDER MASTERS ════════════
+      async function renderSites(q = "") {
+        let S = await dbGet("sites");
+        if (q)
+          S = S.filter((s) => s.name.toLowerCase().includes(q.toLowerCase()));
+        const sc = {
+          Active: "bg-green",
+          Completed: "bg-gray",
+          "On Hold": "bg-orange",
+        };
+        const canEdit = can("canEditSite"),
+          canDel = can("canDeleteSite");
+        document.getElementById("sitesTable").innerHTML =
+          S.map(
+            (s, i) => `<tr>
+    <td>${String(i + 1).padStart(3, "0")}</td><td><strong>${s.name}</strong></td><td>${s.addr || ""}</td>
+    <td>${s.start_date || ""}</td><td>${s.supervisor || ""}</td><td>${s.phone || ""}</td>
+    <td><span class="badge ${sc[s.status] || "bg-gray"}">${s.status}</span></td>
+    <td style="white-space:nowrap">${canEdit ? `<button class="btn-sm-edit" onclick="editSite('${s.id}')">Edit</button>` : ""}${canDel ? `<button class="btn-sm-danger" onclick="deleteSite('${s.id}')">Delete</button>` : ""}</td>
+  </tr>`,
+          ).join("") ||
+          '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No sites. Click "Add Site".</td></tr>';
+      }
+      async function renderWorkers(q = "") {
+        let W = await dbGet("workers");
+        const fSite = document.getElementById("wfSite")?.value || "";
+        const fDes = document.getElementById("wfDes")?.value || "";
+        if (q)
+          W = W.filter((w) => w.name.toLowerCase().includes(q.toLowerCase()));
+        if (fSite) W = W.filter((w) => w.site_id === fSite);
+        if (fDes) W = W.filter((w) => w.designation === fDes);
+        const canEdit = can("canEditWorker"),
+          canDel = can("canDeleteWorker");
+        const sites = await dbGet("sites");
+        document.getElementById("workersTable").innerHTML =
+          W.map((w) => {
+            const sName = sites.find((s) => s.id === w.site_id)?.name || "–";
+            return `<tr>
+      <td><div class="wc"><div class="wav" style="background:${strCol(w.name)}">${w.name[0].toUpperCase()}</div><strong>${w.name}</strong></div></td>
+      <td>${w.designation || ""}</td><td>${w.gender || ""}</td><td>${sName}</td>
+      <td>${fmtF(w.daily_wage)}</td><td>${w.phone || ""}</td>
+      <td><span class="badge ${w.status === "Active" ? "bg-green" : "bg-red"}">${w.status}</span></td>
+      <td style="white-space:nowrap">${canEdit ? `<button class="btn-sm-edit" onclick="editWorker('${w.id}')">Edit</button>` : ""}${canDel ? `<button class="btn-sm-danger" onclick="deleteWorker('${w.id}')">Delete</button>` : ""}</td>
+    </tr>`;
+          }).join("") ||
+          '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No workers. Click "Add Worker".</td></tr>';
+      }
+      async function renderMatMaster(q = "") {
+        let M = await dbGet("materials_master");
+        if (q)
+          M = M.filter((m) => m.name.toLowerCase().includes(q.toLowerCase()));
+        const cB = {
+          Cement: "bg-gray",
+          Sand: "bg-orange",
+          Aggregate: "bg-gray",
+          Steel: "bg-blue",
+          Bricks: "bg-red",
+        };
+        const canEdit = can("canEditMaterial"),
+          canDel = can("canDeleteMaterial");
+        document.getElementById("matMasterTable").innerHTML =
+          M.map(
+            (m, i) => `<tr>
+    <td>${String(i + 1).padStart(3, "0")}</td><td><strong>${m.name}</strong></td>
+    <td><span class="badge ${cB[m.category] || "bg-gray"}">${m.category || ""}</span></td>
+    <td>${m.unit || ""}</td><td>${fmtF(m.default_rate || 0)} / ${m.unit || "unit"}</td>
+    <td><span class="badge ${m.status === "Active" ? "bg-green" : "bg-red"}">${m.status}</span></td>
+    <td style="white-space:nowrap">${canEdit ? `<button class="btn-sm-edit" onclick="editMatMaster('${m.id}')">Edit</button>` : ""}${canDel ? `<button class="btn-sm-danger" onclick="deleteMatMaster('${m.id}')">Delete</button>` : ""}</td>
+  </tr>`,
+          ).join("") ||
+          '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No materials.</td></tr>';
+      }
+
+      // ── NAVIGATION ──
+      function showPage(id, el) {
+        if (window.innerWidth <= 900) closeSidebar();
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + id).classList.add("active");
+        el.classList.add("active");
+        const titles = {
+          overview: "Overview",
+          labour: "Labour",
+          materials: "Materials",
+          cashbook: "Cashbook",
+          masters: "Masters",
+        };
+        document.getElementById("pgT").textContent = titles[id];
+        document.getElementById("pgB").textContent =
+          "Dashboard › " + titles[id];
+        document.getElementById("sidebar").classList.remove("open");
+        populateAllDropdowns();
+        if (id === "overview") renderOverview();
+        else if (id === "labour") renderLabour();
+        else if (id === "materials") renderMaterials();
+        else if (id === "cashbook") renderCash();
+        else if (id === "masters") {
+          renderSites();
+          renderWorkers();
+          renderMatMaster();
+        }
+      }
+      function showMaster(id, el) {
+        ["sites", "workers", "materials"].forEach((m) => {
+          document.getElementById("ms-" + m).style.display =
+            m === id ? "block" : "none";
+        });
+        document
+          .querySelectorAll(".mtab")
+          .forEach((t) => t.classList.remove("active"));
+        el.classList.add("active");
+      }
+
+      // ── EXPORT ──
+      async function exportData() {
+        const [sites, workers, matMaster, attend, mats, cash] =
+          await Promise.all([
+            dbGet("sites"),
+            dbGet("workers"),
+            dbGet("materials_master"),
+            dbGet("attendance"),
+            dbGet("material_entries"),
+            dbGet("cashbook"),
+          ]);
+        const blob = new Blob(
+          [
+            JSON.stringify(
+              {
+                sites,
+                workers,
+                materials_master: matMaster,
+                attendance: attend,
+                material_entries: mats,
+                cashbook: cash,
+              },
+              null,
+              2,
+            ),
+          ],
+          { type: "application/json" },
+        );
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "constructco-" + getToday() + ".json";
+        a.click();
+        toast("Data exported!");
+      }
+
+      // ── SIDEBAR TOGGLE (mobile) ──
+      function toggleSidebar() {
+        const sb = document.getElementById("sidebar");
+        const ov = document.getElementById("sidebarOverlay");
+        const isOpen = sb.classList.toggle("open");
+        if (ov) ov.classList.toggle("show", isOpen);
+      }
+      function closeSidebar() {
+        document.getElementById("sidebar").classList.remove("open");
+        const ov = document.getElementById("sidebarOverlay");
+        if (ov) ov.classList.remove("show");
+      }
+
+      // ── BOOT ──
+      window.onload = async function () {
+        const { data } = await sb.auth.getSession();
+        if (data.session) {
+          currentUserId = data.session.user.id;
+          showApp(data.session.user);
+        } else {
+          document.getElementById("loginScreen").style.display = "flex";
+          document.getElementById("appWrapper").style.display = "none";
+        }
+      };
+    </script>
+  </body>
+</html>

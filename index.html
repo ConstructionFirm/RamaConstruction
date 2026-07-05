@@ -1,0 +1,1863 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConstructCo — Construction Management System</title>
+    <meta
+      name="description"
+      content="ConstructCo is a powerful construction management platform for managing labour, materials, cashbook, sites and workers."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Lucide Icons CDN (BUG-013) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- ════════════ LOGIN SCREEN ════════════ -->
+    <!-- BUG-012: Login theme toggle — must run BEFORE paint to avoid flash -->
+    <script>
+      (function () {
+        var saved = localStorage.getItem("theme");
+        var osDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var theme = saved || (osDark ? "dark" : "light");
+        document.body && document.body.setAttribute("data-theme", theme);
+        document.addEventListener("DOMContentLoaded", function () {
+          document.body.setAttribute("data-theme", theme);
+        });
+      })();
+    </script>
+    <div id="loginScreen" class="split-login">
+      <div class="login-left">
+        <div class="circles-bg">
+          <div class="circle c1"></div>
+          <div class="circle c2"></div>
+          <div class="circle c3"></div>
+        </div>
+        <div class="left-content">
+          <div class="logo-box">
+            <div class="logo-icon-lg">🏗️</div>
+            <h2>ConstructCo</h2>
+            <p>Construction Management System</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Auth Pane -->
+      <div class="login-right">
+        <!-- BUG-016: login theme toggle removed — login page is always light -->
+        <!-- Mobile Header (Hidden on Desktop) -->
+        <div class="mobile-header">
+          <div class="logo-icon-lg">🏗️</div>
+          <h2>ConstructCo</h2>
+          <p>Construction Management System</p>
+        </div>
+
+        <div class="auth-box-ui">
+          <div class="auth-header">
+            <h2>Welcome back <span class="wave">👋</span></h2>
+            <p>Sign in to your account</p>
+          </div>
+
+          <div class="auth-tabs-ui">
+            <div
+              class="auth-tab active"
+              id="tabLogin"
+              onclick="switchAuthTab('login')"
+            >
+              Sign In
+            </div>
+            <div
+              class="auth-tab"
+              id="tabSignup"
+              onclick="switchAuthTab('signup')"
+            >
+              Create Account
+            </div>
+          </div>
+
+          <!-- LOGIN FORM -->
+          <div id="loginForm" class="auth-form-ui">
+            <div class="input-grp">
+              <label>Email Address</label>
+              <div class="input-with-icon">
+                <span class="i-icon">✉️</span>
+                <input
+                  id="li_email"
+                  type="email"
+                  placeholder="test@gmail.com"
+                />
+              </div>
+            </div>
+            <div class="input-grp">
+              <label>Password</label>
+              <div class="input-with-icon">
+                <span class="i-icon">🔒</span>
+                <input id="li_pass" type="password" placeholder="••••••••" />
+                <button
+                  class="pw-eye-btn"
+                  type="button"
+                  onclick="togglePw('li_pass', this)"
+                >
+                  👁
+                </button>
+              </div>
+            </div>
+            <div class="auth-actions">
+              <label class="remember-label"
+                ><input type="checkbox" id="li_remember" checked /> Remember
+                me</label
+              >
+              <a href="#" class="forgot-link">Forgot password?</a>
+            </div>
+            <button class="btn-primary-lg" id="loginBtn" onclick="doLogin()">
+              Sign In ➔
+            </button>
+          </div>
+
+          <!-- SIGNUP FORM -->
+          <div id="signupForm" class="auth-form-ui" style="display: none">
+            <div class="input-grp">
+              <label>Select Role</label>
+              <div class="input-with-icon">
+                <span class="i-icon">👤</span>
+                <select id="su_role">
+                  <option value="">-- Select Role --</option>
+                  <option value="admin">Admin</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="engineer">Engineer</option>
+                  <option value="accountant">Accountant</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-grp">
+              <label>Full Name</label>
+              <div class="input-with-icon">
+                <span class="i-icon">📝</span>
+                <input id="su_name" placeholder="Full Name" />
+              </div>
+            </div>
+            <div class="input-grp">
+              <label>Email Address</label>
+              <div class="input-with-icon">
+                <span class="i-icon">✉️</span>
+                <input
+                  id="su_email"
+                  type="email"
+                  placeholder="you@example.com"
+                />
+              </div>
+            </div>
+            <div class="input-grp">
+              <label>Password</label>
+              <div class="input-with-icon">
+                <span class="i-icon">🔒</span>
+                <input
+                  id="su_pass"
+                  type="password"
+                  placeholder="Password (min 6 chars)"
+                />
+                <button
+                  class="pw-eye-btn"
+                  type="button"
+                  onclick="togglePw('su_pass', this)"
+                >
+                  👁
+                </button>
+              </div>
+            </div>
+            <button class="btn-primary-lg" id="signupBtn" onclick="doSignup()">
+              Create Account ➔
+            </button>
+          </div>
+
+          <div id="li_err" class="auth-err"></div>
+        </div>
+        <div class="protected-text">Protected by role-based access control</div>
+      </div>
+    </div>
+
+    <!-- ════════════ APP WRAPPER ════════════ -->
+    <div
+      id="appWrapper"
+      style="display: none; height: 100vh; display: none; flex-direction: row"
+    >
+      <!-- SIDEBAR -->
+      <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        onclick="closeSidebar()"
+      ></div>
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <div
+            class="brand-av"
+            style="
+              background: #ea580c;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
+            "
+          >
+            🏗️
+          </div>
+          <div class="brand-info">
+            <h3 style="font-weight: 800; letter-spacing: -0.2px">
+              ConstructCo
+            </h3>
+            <p style="font-weight: 600; font-size: 10px; opacity: 0.7">
+              System Management
+            </p>
+          </div>
+        </div>
+        <div class="nav-section">Main</div>
+        <div
+          class="nav-item active"
+          id="navOverview"
+          onclick="showPage('overview', this)"
+        >
+          <i data-lucide="home"></i><span class="nav-label">Overview</span>
+        </div>
+        <div class="nav-section">Operations</div>
+        <div class="nav-item" id="navLabour" onclick="showPage('labour', this)">
+          <i data-lucide="hard-hat"></i><span class="nav-label">Labour</span>
+        </div>
+        <div
+          class="nav-item"
+          id="navMaterials"
+          onclick="showPage('materials', this)"
+        >
+          <i data-lucide="package"></i><span class="nav-label">Materials</span>
+        </div>
+        <div
+          class="nav-item"
+          id="navCashbook"
+          onclick="showPage('cashbook', this)"
+        >
+          <i data-lucide="wallet"></i><span class="nav-label">Cashbook</span>
+        </div>
+        <div class="nav-item" id="navSites" onclick="showPage('sites', this)">
+          <i data-lucide="building-2"></i><span class="nav-label">Sites</span>
+        </div>
+        <div
+          class="nav-item"
+          id="navWorkers"
+          onclick="showPage('workers', this)"
+        >
+          <i data-lucide="users"></i><span class="nav-label">Workers</span>
+        </div>
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div
+              class="user-av"
+              id="userAv"
+              style="
+                background: #f59e0b;
+                border: 2px solid rgba(255, 255, 255, 0.1);
+              "
+            >
+              U
+            </div>
+            <div style="flex: 1; overflow: hidden">
+              <div
+                class="user-name"
+                id="userEmail"
+                style="font-size: 12px; font-weight: 700; color: var(--text)"
+              >
+                User Name
+              </div>
+              <div
+                class="user-role"
+                id="userRoleLbl"
+                style="
+                  font-size: 10px;
+                  color: var(--muted);
+                  text-transform: capitalize;
+                "
+              >
+                Administrator
+              </div>
+            </div>
+          </div>
+          <button
+            class="btn-signout"
+            onclick="doLogout()"
+            style="width: 100%; justify-content: center; gap: 8px"
+          >
+            <span>🚪</span> Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="main">
+        <div class="topbar">
+          <!-- Mobile brand (shown ≤900px) -->
+          <div class="topbar-left">
+            <div class="topbar-brand">
+              <div class="topbar-brand-icon">🏗️</div>
+              <div class="topbar-brand-text">
+                <h3>ConstructCo</h3>
+                <p>Management System</p>
+              </div>
+            </div>
+            <!-- Desktop: hamburger + search -->
+            <button class="menu-btn" onclick="toggleSidebar()" id="deskMenuBtn">
+              ☰
+            </button>
+            <div class="topbar-search desk-only">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Search sites, workers..." />
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div
+              class="topbar-date"
+              id="todayDate"
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--muted);
+                margin-right: 15px;
+              "
+              onclick="renderAll()"
+            ></div>
+            <button
+              class="icon-btn theme-toggle"
+              onclick="toggleTheme()"
+              id="themeToggleBtn"
+            >
+              🌙
+            </button>
+            <button class="icon-btn">🔔<span class="dot"></span></button>
+            <div class="user-av-small" id="topAv">TG</div>
+            <button class="topbar-ham-btn" onclick="toggleSidebar()">☰</button>
+          </div>
+        </div>
+
+        <div class="content">
+          <!-- PAGE HEADER (Per Page) -->
+          <div class="page-header">
+            <div class="ph-left">
+              <div class="page-title" id="pgT">Overview</div>
+              <div class="page-bread" id="pgB">Dashboard › Overview</div>
+            </div>
+            <div class="ph-right">
+              <div
+                class="date-picker-wrap"
+                onclick="
+                  document.getElementById('headerDateInput').showPicker
+                    ? document.getElementById('headerDateInput').showPicker()
+                    : document.getElementById('headerDateInput').click()
+                "
+              >
+                <span class="dp-icon">📅</span>
+                <span class="dp-label" id="pageHeaderDate">Today</span>
+                <input
+                  type="date"
+                  id="headerDateInput"
+                  style="
+                    position: absolute;
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                    pointer-events: none;
+                  "
+                  onchange="onHeaderDateChange(this.value)"
+                />
+              </div>
+              <div class="site-filter">
+                <select
+                  class="ph-select"
+                  id="gSite"
+                  onchange="syncGlobalSite('gSite')"
+                >
+                  <option value="">All Sites</option>
+                </select>
+              </div>
+              <button class="btn btn-outline desk-only" onclick="exportData()">
+                ⬇ Export
+              </button>
+            </div>
+          </div>
+
+          <!-- NEW OVERVIEW (Light/Dark Refactor) -->
+          <div class="page active" id="page-overview">
+            <!-- Stats Cards Row (4 cards equal spacing) -->
+            <div class="ov2-stats-row">
+              <div class="ov2-card ov2-kpi-card card-sites">
+                <div class="ov2-kpi-icon-wrap icon-sites">
+                  <span class="ov2-emoji">🏗️</span>
+                </div>
+                <div class="ov2-kpi-main">
+                  <div class="ov2-kpi-val" id="ov-sites">0</div>
+                  <div class="ov2-kpi-label">Active Sites</div>
+                  <div class="ov2-kpi-trend" id="ov-sites-trend">
+                    <span class="success-text">~ +0</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ov2-card ov2-kpi-card card-labour">
+                <div class="ov2-kpi-icon-wrap icon-labour">
+                  <span class="ov2-emoji">👷</span>
+                </div>
+                <div class="ov2-kpi-main">
+                  <div class="ov2-kpi-val" id="ov-labour">₹0</div>
+                  <div class="ov2-kpi-label">Labour Cost</div>
+                  <div class="ov2-kpi-trend" id="ov-labour-trend">
+                    <span class="success-text">~ +0%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ov2-card ov2-kpi-card card-mat">
+                <div class="ov2-kpi-icon-wrap icon-mat">
+                  <span class="ov2-emoji">🧱</span>
+                </div>
+                <div class="ov2-kpi-main">
+                  <div class="ov2-kpi-val" id="ov-mat">₹0</div>
+                  <div class="ov2-kpi-label">Material Cost</div>
+                  <div class="ov2-kpi-trend">
+                    <span class="success-text">~ +12%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ov2-card ov2-kpi-card card-cash">
+                <div class="ov2-kpi-icon-wrap icon-cash">
+                  <span class="ov2-emoji">💰</span>
+                </div>
+                <div class="ov2-kpi-main">
+                  <div class="ov2-kpi-val" id="ov-cash">₹0</div>
+                  <div class="ov2-kpi-label">Net Balance</div>
+                  <div class="ov2-kpi-trend" id="ov-cash-trend">
+                    <span class="danger-text">~ -0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts Row (2 columns) -->
+            <div class="ov2-charts-row">
+              <div class="ov2-card ov2-chart-panel">
+                <div class="ov2-card-header">
+                  <div class="ov2-card-title">📈 Labour Cost – Last 7 Days</div>
+                </div>
+                <div
+                  class="ov2-chart-container"
+                  style="height: 250px; position: relative"
+                >
+                  <canvas id="trendChart"></canvas>
+                </div>
+              </div>
+
+              <div class="ov2-card ov2-sitewise-panel">
+                <div class="ov2-card-header">
+                  <div class="ov2-card-title">🏗️ Site-wise Cost</div>
+                </div>
+                <div id="siteBarList" class="ov2-sitewise-list"></div>
+              </div>
+            </div>
+
+            <!-- Site Summary Table -->
+            <div class="ov2-card ov2-table-panel" style="margin-bottom: 0">
+              <div class="ov2-card-header">
+                <div class="ov2-card-title">📋 Site Summary</div>
+              </div>
+              <div class="ov2-table-wrapper">
+                <table class="ov2-table">
+                  <thead>
+                    <tr>
+                      <th>SITE</th>
+                      <th>LABOUR</th>
+                      <th>MATERIAL</th>
+                      <th style="text-align: right">BALANCE</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ovTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- LABOUR -->
+          <div class="page" id="page-labour">
+            <!-- Filter Bar -->
+            <div class="fbar">
+              <input
+                type="date"
+                class="fi"
+                id="labDate"
+                onchange="renderLabour()"
+                onclick="this.showPicker()"
+              />
+              <select
+                class="fi"
+                id="labSite"
+                onchange="syncGlobalSite('labSite')"
+              >
+                <option value="">All Sites</option>
+              </select>
+              <select class="fi" id="labDes" onchange="renderLabour()">
+                <option value="">All Designations</option>
+                <option>Mason</option>
+                <option>Labour</option>
+                <option>Helper</option>
+                <option>Carpenter</option>
+                <option>Barbender</option>
+              </select>
+              <div class="topbar-search" style="flex: 1">
+                <span class="search-icon">🔍</span>
+                <input
+                  type="text"
+                  id="labSearch"
+                  placeholder="Worker name..."
+                  oninput="renderLabour()"
+                />
+              </div>
+              <input type="hidden" id="labStatus" value="" />
+              <!-- BUG-019: quick "Add Worker" on Labour page so a new labour can
+                   be registered here before taking attendance, without going to
+                   the Workers page. Reuses the shared worker modal. -->
+              <button
+                class="btn btn-outline"
+                id="btnAddWorkerLab"
+                onclick="
+                  editId = null;
+                  document.getElementById('workerModalTitle').textContent =
+                    'Add Worker';
+                  openModal('workerModal');
+                "
+              >
+                + Add Worker
+              </button>
+              <button
+                class="btn btn-primary"
+                id="btnAddAttend"
+                onclick="openAttendanceModal()"
+              >
+                + Add Attendance
+              </button>
+            </div>
+
+            <!-- KPI Summary Row -->
+            <div class="g4" style="margin-bottom: 16px">
+              <div
+                class="kpi-mini"
+                style="background: var(--success-bg); color: var(--success)"
+              >
+                <div class="km-val" id="labP">0</div>
+                <div class="km-lbl">Present</div>
+              </div>
+              <div
+                class="kpi-mini"
+                style="background: var(--warning-bg); color: var(--warning)"
+              >
+                <div class="km-val" id="labH">0</div>
+                <div class="km-lbl">Half Day</div>
+              </div>
+              <div
+                class="kpi-mini"
+                style="background: var(--danger-bg); color: var(--danger)"
+              >
+                <div class="km-val" id="labA">0</div>
+                <div class="km-lbl">Absent</div>
+              </div>
+              <div
+                class="kpi-mini"
+                style="background: var(--info-bg); color: var(--info)"
+              >
+                <div class="km-val" id="labTotalPay">₹0</div>
+                <div class="km-lbl">Total Pay</div>
+              </div>
+            </div>
+
+            <!-- Attendance Cards Container -->
+            <div
+              id="labCardsContainer"
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 10px;
+              "
+            ></div>
+          </div>
+
+          <!-- MATERIALS (Rebuilt Minimal Light-First UI) -->
+          <div class="page" id="page-materials">
+            <!-- 1. Top Navigation -->
+            <div class="mat-header">
+              <div class="mh-left"></div>
+              <div class="mh-right">
+                <div class="topbar-search" style="margin: 0; min-width: 250px">
+                  <span class="search-icon">🔍</span>
+                  <input
+                    type="text"
+                    id="matSearch"
+                    placeholder="Search material..."
+                    oninput="renderMaterials()"
+                  />
+                </div>
+                <!-- Reuse global exportData logic -->
+                <button
+                  class="btn btn-outline desk-only"
+                  onclick="exportData()"
+                >
+                  ⬇ Export
+                </button>
+                <button
+                  class="btn btn-primary"
+                  id="btnAddMatEntry"
+                  onclick="openModal('matModal')"
+                  style="
+                    background: var(--primary);
+                    border-color: var(--primary);
+                  "
+                >
+                  + Add Entry
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Summary Metrics Row (Inline) -->
+            <div class="mat-metrics-inline">
+              <div class="mmi-item mmi-in-val">
+                <span class="mmi-val" id="matInVal">₹0</span>
+                <span class="mmi-lbl">IN Value</span>
+              </div>
+              <div class="mmi-item mmi-out-val">
+                <span class="mmi-val" id="matOutVal">₹0</span>
+                <span class="mmi-lbl">OUT Value</span>
+              </div>
+              <div class="mmi-item mmi-in-ent">
+                <span class="mmi-val" id="matInCnt">0</span>
+                <span class="mmi-lbl">IN Entries</span>
+              </div>
+              <div class="mmi-item mmi-out-ent">
+                <span class="mmi-val" id="matOutCnt">0</span>
+                <span class="mmi-lbl">OUT Entries</span>
+              </div>
+            </div>
+
+            <!-- 3. Filters Row -->
+            <div class="mat-filters-row">
+              <div class="mfr-left">
+                <select
+                  class="fi"
+                  id="matSite"
+                  onchange="syncGlobalSite('matSite')"
+                >
+                  <option value="">All Sites</option>
+                </select>
+                <select class="fi" id="matName" onchange="renderMaterials()">
+                  <option value="">All Materials</option>
+                </select>
+                <!-- Hidden input to maintain compatibility with app.js filter bindings implicitly -->
+                <input type="hidden" id="matType" value="" />
+              </div>
+              <div class="mfr-right">
+                <div class="mat-type-toggle">
+                  <button
+                    class="btn-mat-type active"
+                    onclick="setMatTypeFilter('')"
+                  >
+                    All
+                  </button>
+                  <button class="btn-mat-type" onclick="setMatTypeFilter('In')">
+                    📥 IN
+                  </button>
+                  <button
+                    class="btn-mat-type"
+                    onclick="setMatTypeFilter('Out')"
+                  >
+                    📤 OUT
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Materials Table (CORE) -->
+            <div class="mat-table-container card">
+              <div class="tw">
+                <table class="mat-clean-table">
+                  <thead>
+                    <tr>
+                      <th>DATE</th>
+                      <th>MATERIAL</th>
+                      <th>SITE</th>
+                      <th>TYPE</th>
+                      <th>QTY</th>
+                      <th>RATE (₹)</th>
+                      <th>AMOUNT</th>
+                      <th>PARTY</th>
+                      <th style="text-align: right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody id="matTable"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 5. Stock Section -->
+            <div class="mat-stock-container card">
+              <div class="mat-stock-header">
+                <span class="stock-icon">📦</span> Current Stock Levels
+              </div>
+              <div id="stockList" class="mat-stock-list"></div>
+            </div>
+          </div>
+
+          <!-- CASHBOOK -->
+          <div class="page" id="page-cashbook">
+            <div class="fbar">
+              <select
+                class="fi"
+                id="cashSite"
+                onchange="syncGlobalSite('cashSite')"
+              >
+                <option value="">All Sites</option>
+              </select>
+              <select class="fi" id="cashType" onchange="renderCash()">
+                <option value="">All Types</option>
+                <option>Money Sent</option>
+                <option>Expense</option>
+              </select>
+              <select class="fi" id="cashHead" onchange="renderCash()">
+                <option value="">All Heads</option>
+                <option>Labour Payment</option>
+                <option>Material Purchase</option>
+                <option>Petty Expense</option>
+                <option>Fuel</option>
+                <option>Other</option>
+              </select>
+              <input
+                type="date"
+                class="fi"
+                id="cashFrom"
+                onchange="renderCash()"
+                onclick="this.showPicker()"
+              />
+              <input
+                type="date"
+                class="fi"
+                id="cashTo"
+                onchange="renderCash()"
+                onclick="this.showPicker()"
+              />
+              <div class="topbar-search" style="flex: 1">
+                <span class="search-icon">🔍</span>
+                <input
+                  type="text"
+                  id="cashSearch"
+                  placeholder="Search cashbook..."
+                  oninput="renderCash()"
+                />
+              </div>
+              <button
+                class="btn btn-primary"
+                id="btnAddCash"
+                onclick="openModal('cashModal')"
+              >
+                + Add Entry
+              </button>
+            </div>
+            <div class="g5">
+              <div class="sp">
+                <div class="spv" id="cashSent" style="color: var(--success)">
+                  ₹0
+                </div>
+                <div class="spl">Total Sent</div>
+              </div>
+              <div class="sp">
+                <div class="spv" id="cashExp" style="color: var(--danger)">
+                  ₹0
+                </div>
+                <div class="spl">Total Expenses</div>
+              </div>
+              <div class="sp">
+                <div class="spv" id="cashBal" style="color: var(--info)">
+                  ₹0
+                </div>
+                <div class="spl">Balance</div>
+              </div>
+              <div class="sp">
+                <div class="spv" id="cashLabPaid" style="color: var(--warning)">
+                  ₹0
+                </div>
+                <div class="spl">Labour Paid</div>
+              </div>
+              <div class="sp">
+                <div
+                  class="spv"
+                  id="cashMatBought"
+                  style="color: var(--primary)"
+                >
+                  ₹0
+                </div>
+                <div class="spl">Material Purchased</div>
+              </div>
+            </div>
+            <div class="g2">
+              <div class="card" style="margin-bottom: 0">
+                <div class="ch">
+                  <div class="ct">💰 Transactions</div>
+                </div>
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Site</th>
+                        <th>Type</th>
+                        <th>Head</th>
+                        <th>Amount</th>
+                        <th>Mode</th>
+                        <th>Party</th>
+                        <th>Notes</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cashTable"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card" style="margin-bottom: 0">
+                <div class="ch">
+                  <div class="ct">🏗️ Site Balance</div>
+                </div>
+                <div class="tw">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Site</th>
+                        <th>Sent</th>
+                        <th>Expenses</th>
+                        <th>Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cashSiteTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SITES -->
+          <div class="page" id="page-sites">
+            <div class="fbar">
+              <div class="topbar-search" style="flex: 1">
+                <span class="search-icon">🔍</span>
+                <input
+                  type="text"
+                  id="siteSearchInp"
+                  placeholder="Search sites..."
+                  oninput="renderSites()"
+                />
+              </div>
+              <select class="fi" id="siteStatusFilt" onchange="renderSites()">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Completed">Completed</option>
+                <option value="On Hold">On Hold</option>
+              </select>
+              <button
+                class="btn btn-primary"
+                id="btnAddSite"
+                onclick="
+                  editId = null;
+                  document.getElementById('siteModalTitle').textContent =
+                    'Add Site';
+                  populateSiteUserDropdowns();
+                  openModal('siteModal');
+                "
+              >
+                + Add Site
+              </button>
+            </div>
+            <div
+              id="sitesAccordionContainer"
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 10px;
+              "
+            ></div>
+          </div>
+
+          <!-- WORKERS -->
+          <div class="page" id="page-workers">
+            <!-- Workers Header Bar -->
+            <div class="workers-header">
+              <div class="workers-header-left"></div>
+              <div class="workers-header-right">
+                <div class="workers-search-box">
+                  <span class="search-icon">🔍</span>
+                  <input
+                    type="text"
+                    id="workerSearchInp"
+                    placeholder="Search workers..."
+                    oninput="renderWorkers()"
+                  />
+                </div>
+                <div class="workers-view-toggle">
+                  <button
+                    class="view-toggle-btn active"
+                    id="workerViewList"
+                    onclick="setWorkerView('list')"
+                    title="List View"
+                  >
+                    ☰
+                  </button>
+                  <button
+                    class="view-toggle-btn"
+                    id="workerViewGrid"
+                    onclick="setWorkerView('grid')"
+                    title="Grid View"
+                  >
+                    ⊞
+                  </button>
+                </div>
+                <button
+                  class="btn btn-outline workers-export-btn"
+                  onclick="exportWorkers()"
+                >
+                  ↓ Export
+                </button>
+                <button
+                  class="btn btn-primary"
+                  id="btnAddNewWorker"
+                  onclick="
+                    editId = null;
+                    document.getElementById('workerModalTitle').textContent =
+                      'Add Worker';
+                    openModal('workerModal');
+                  "
+                >
+                  + Add Worker
+                </button>
+              </div>
+            </div>
+
+            <!-- Filters Row -->
+            <div class="workers-filters">
+              <div class="workers-filters-left">
+                <select
+                  class="wf-select"
+                  id="wfSite"
+                  onchange="syncGlobalSite('wfSite')"
+                >
+                  <option value="">All Sites</option>
+                </select>
+                <select class="wf-select" id="wfDes" onchange="renderWorkers()">
+                  <option value="">All Designations</option>
+                  <option>Mason</option>
+                  <option>Labour</option>
+                  <option>Helper</option>
+                  <option>Carpenter</option>
+                  <option>Barbender</option>
+                </select>
+                <select
+                  class="wf-select"
+                  id="wfStatus"
+                  onchange="renderWorkers()"
+                >
+                  <option value="">All Status</option>
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+              <div class="workers-filters-right">
+                <label class="workers-sort-label"
+                  >Sort:
+                  <select
+                    class="wf-select"
+                    id="wfSort"
+                    onchange="renderWorkers()"
+                  >
+                    <option value="name-asc">Name A-Z</option>
+                    <option value="name-desc">Name Z-A</option>
+                    <option value="wage-high">Wage High-Low</option>
+                    <option value="wage-low">Wage Low-High</option>
+                    <option value="recent">Recently Added</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <!-- Workers Table (List View) -->
+            <div class="workers-table-card" id="workersListView">
+              <div class="tw">
+                <table class="workers-table" id="workersTable">
+                  <thead>
+                    <tr>
+                      <th class="wt-check">
+                        <input
+                          type="checkbox"
+                          id="workerCheckAll"
+                          onchange="toggleAllWorkerChecks(this)"
+                        />
+                      </th>
+                      <th>WORKER</th>
+                      <th>DESIGNATION</th>
+                      <th>SITE</th>
+                      <th>GENDER</th>
+                      <th>WAGE/DAY</th>
+                      <th>JOINED</th>
+                      <th>STATUS</th>
+                      <th>ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody id="workersTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Workers Grid (Card View) -->
+            <div
+              class="workers-grid-container"
+              id="workersGridView"
+              style="display: none"
+            ></div>
+          </div>
+        </div>
+        <!-- content -->
+      </div>
+      <!-- main -->
+    </div>
+    <!-- appWrapper -->
+
+    <!-- ════════════ MODALS ════════════ -->
+    <!-- Site Modal -->
+    <div class="modal-overlay" id="siteModal">
+      <div class="modal">
+        <div class="mh">
+          <div class="mh-title">
+            <div class="mh-icon">🏗️</div>
+            <div class="mh-title-text">
+              <h3 id="siteModalTitle">Add New Site</h3>
+              <p>Register a construction site</p>
+            </div>
+          </div>
+          <button class="close" onclick="closeModal('siteModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="m-section">
+            <div class="m-section-label">Site Details</div>
+            <div class="row">
+              <div>
+                <label>Site Name *</label
+                ><input id="s_name" placeholder="e.g. Arera Colony" />
+              </div>
+              <div>
+                <label>City</label><input id="s_city" placeholder="Bhopal" />
+              </div>
+            </div>
+            <div class="row full">
+              <div><label>Address</label><input id="s_addr" /></div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Start Date</label><input type="date" id="s_date" />
+              </div>
+              <div>
+                <label>Status</label>
+                <select id="s_status">
+                  <option>Active</option>
+                  <option>Completed</option>
+                  <option>On Hold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="m-section">
+            <div class="m-section-label">Team Assignment</div>
+            <div class="row">
+              <div>
+                <label>Supervisor</label>
+                <select id="s_sup">
+                  <option value="">-- Select Supervisor --</option>
+                </select>
+              </div>
+              <div><label>Phone</label><input id="s_phone" /></div>
+            </div>
+            <div class="row full">
+              <div>
+                <label
+                  >Assign Engineers
+                  <small style="font-weight: 400; color: var(--muted)"
+                    >(Ctrl/Cmd = multi-select)</small
+                  ></label
+                >
+                <select
+                  id="s_engineers"
+                  multiple
+                  style="
+                    height: 86px;
+                    width: 100%;
+                    padding: 6px;
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 10px;
+                    font-size: 13px;
+                    outline: none;
+                    background: #fff;
+                    font-family: inherit;
+                  "
+                ></select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn-modal-cancel" onclick="closeModal('siteModal')">
+            Cancel
+          </button>
+          <button class="btn-modal-save" onclick="saveSite()">
+            🏗️ Create Site
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Worker Modal -->
+    <div class="modal-overlay" id="workerModal">
+      <div class="modal">
+        <div class="mh">
+          <div class="mh-title">
+            <div class="mh-icon">👷</div>
+            <div class="mh-title-text">
+              <h3 id="workerModalTitle">Add Worker</h3>
+              <p>Register a new site worker</p>
+            </div>
+          </div>
+          <button class="close" onclick="closeModal('workerModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="m-section">
+            <div class="m-section-label">Personal Information</div>
+            <div class="row">
+              <div>
+                <label>Name *</label
+                ><input id="w_name" placeholder="Full name" />
+              </div>
+              <div>
+                <label>Phone</label
+                ><input id="w_phone" placeholder="9876543210" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Gender</label>
+                <select id="w_gender">
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div>
+                <label>Designation</label>
+                <select id="w_des">
+                  <option>Labour</option>
+                  <option>Mason</option>
+                  <option>Helper</option>
+                  <option>Carpenter</option>
+                  <option>Barbender</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="m-section">
+            <div class="m-section-label">Work Information</div>
+            <div class="row">
+              <div>
+                <label>Daily Wage (₹)</label
+                ><input type="number" id="w_wage" placeholder="e.g. 650" />
+              </div>
+              <div>
+                <label>Assigned Site</label
+                ><select id="w_site"></select>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Status</label>
+                <select id="w_status">
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <!-- BUG-005: Duplicate worker error message -->
+          <p
+            id="workerDuplicateError"
+            class="worker-dup-error"
+            style="display: none"
+          ></p>
+          <button class="btn-modal-cancel" onclick="closeModal('workerModal')">
+            Cancel
+          </button>
+          <button class="btn-modal-save" onclick="saveWorker()">
+            👷 Register Worker
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Material Master Modal -->
+    <div class="modal-overlay" id="matMasterModal">
+      <div class="modal">
+        <div class="mh">
+          <div class="mh-title">
+            <div class="mh-icon">🧱</div>
+            <div class="mh-title-text">
+              <h3 id="matMasterModalTitle">Add Material</h3>
+              <p>Add to material catalogue</p>
+            </div>
+          </div>
+          <button class="close" onclick="closeModal('matMasterModal')">
+            ×
+          </button>
+        </div>
+        <div class="mb">
+          <div class="m-section">
+            <div class="m-section-label">Material Details</div>
+            <div class="row">
+              <div>
+                <label>Name *</label
+                ><input id="mm_name" placeholder="e.g. Cement OPC 53" />
+              </div>
+              <div>
+                <label>Category</label>
+                <select id="mm_cat">
+                  <option>Cement</option>
+                  <option>Sand</option>
+                  <option>Aggregate</option>
+                  <option>Steel</option>
+                  <option>Bricks</option>
+                  <option>Paint</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Unit</label
+                ><input id="mm_unit" placeholder="Bag / Kg / Cft" />
+              </div>
+              <div>
+                <label>Default Rate (₹)</label
+                ><input type="number" id="mm_rate" placeholder="e.g. 380" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Status</label>
+                <select id="mm_status">
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <button
+            class="btn-modal-cancel"
+            onclick="closeModal('matMasterModal')"
+          >
+            Cancel
+          </button>
+          <button class="btn-modal-save" onclick="saveMatMaster()">
+            🧱 Save Material
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Attendance Modal -->
+    <div class="modal-overlay" id="labModal">
+      <div class="modal">
+        <div class="mh">
+          <div class="mh-title">
+            <div class="mh-icon">👷</div>
+            <div class="mh-title-text">
+              <h3 id="labModalTitle">Add Attendance</h3>
+              <p>Mark worker attendance for today</p>
+            </div>
+          </div>
+          <button class="close" onclick="closeModal('labModal')">×</button>
+        </div>
+        <div class="mb">
+          <div class="m-section">
+            <div class="m-section-label">Status</div>
+            <div class="m-status-grid">
+              <button
+                class="m-status-btn active-present"
+                onclick="
+                  document.getElementById('l_status').value = 'Present';
+                  calcPay();
+                  this.closest('.m-status-grid')
+                    .querySelectorAll('.m-status-btn')
+                    .forEach((b) => (b.className = 'm-status-btn'));
+                  this.className = 'm-status-btn active-present';
+                "
+              >
+                Present
+              </button>
+              <button
+                class="m-status-btn"
+                onclick="
+                  document.getElementById('l_status').value = 'Half Day';
+                  calcPay();
+                  this.closest('.m-status-grid')
+                    .querySelectorAll('.m-status-btn')
+                    .forEach((b) => (b.className = 'm-status-btn'));
+                  this.className = 'm-status-btn active-halfday';
+                "
+              >
+                Half Day
+              </button>
+              <button
+                class="m-status-btn"
+                onclick="
+                  document.getElementById('l_status').value = 'Absent';
+                  calcPay();
+                  this.closest('.m-status-grid')
+                    .querySelectorAll('.m-status-btn')
+                    .forEach((b) => (b.className = 'm-status-btn'));
+                  this.className = 'm-status-btn active-absent';
+                "
+              >
+                Absent
+              </button>
+              <button
+                class="m-status-btn"
+                onclick="
+                  document.getElementById('l_status').value = 'Leave';
+                  calcPay();
+                  this.closest('.m-status-grid')
+                    .querySelectorAll('.m-status-btn')
+                    .forEach((b) => (b.className = 'm-status-btn'));
+                  this.className = 'm-status-btn active-leave';
+                "
+              >
+                Leave
+              </button>
+            </div>
+            <!-- hidden select kept for JS compatibility -->
+            <select id="l_status" onchange="calcPay()" style="display: none">
+              <option>Present</option>
+              <option>Half Day</option>
+              <option>Absent</option>
+              <option>Leave</option>
+            </select>
+          </div>
+          <div class="m-section">
+            <div class="m-section-label">Worker & Site</div>
+            <div class="row">
+              <div><label>Date *</label><input type="date" id="l_date" /></div>
+              <div>
+                <label>Site *</label
+                ><select
+                  id="l_site"
+                  onchange="populateWorkerDropdown()"
+                ></select>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Worker *</label>
+                <select id="l_worker" onchange="autoFillWorker()">
+                  <option value="">-- Select Worker --</option>
+                </select>
+              </div>
+              <div>
+                <label>Designation</label
+                ><input id="l_des" readonly />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Gender</label
+                ><input id="l_gender" readonly />
+              </div>
+              <div>
+                <label>Wage/Day (₹)</label
+                ><input type="number" id="l_wage" placeholder="Auto-filled" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Working Hours</label
+                ><input
+                  type="number"
+                  id="l_hours"
+                  placeholder="e.g. 8"
+                  oninput="calcPay()"
+                />
+              </div>
+              <div>
+                <label>Remarks</label
+                ><input id="l_remarks" placeholder="Optional notes" />
+              </div>
+            </div>
+          </div>
+          <!-- Calculated pay box -->
+          <div class="m-calc-box">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div class="m-calc-icon">₹</div>
+              <div>
+                <div class="m-calc-label">Calculated Pay</div>
+                <input
+                  type="number"
+                  id="l_pay"
+                  readonly
+                  style="
+                    background: transparent;
+                    border: none;
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: #1d4ed8;
+                    outline: none;
+                    width: 120px;
+                    padding: 0;
+                    font-family: inherit;
+                  "
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <!-- BUG-004: live calc hint -->
+            <span class="m-calc-hint" id="labCalcHint">Status × Wage</span>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn-modal-cancel" onclick="closeModal('labModal')">
+            Cancel
+          </button>
+          <button class="btn-modal-save" onclick="saveAttendance()">
+            ✓ Save Attendance
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Material Entry Modal -->
+    <div class="modal-overlay" id="matModal">
+      <div class="modal">
+        <div class="mh">
+          <div class="mh-title">
+            <div class="mh-icon">🧱</div>
+            <div class="mh-title-text">
+              <h3 id="matModalTitle">Add Material Entry</h3>
+              <p>Record material IN or OUT</p>
+            </div>
+          </div>
+          <button class="close" onclick="closeModal('matModal')">×</button>
+        </div>
+        <div class="mb">
+          <!-- IN / OUT type toggle -->
+          <div class="m-section" style="gap: 8px">
+            <div class="m-section-label">Entry Type</div>
+            <div class="m-type-toggle">
+              <button
+                class="m-type-btn active-orange"
+                id="meTypeIn"
+                onclick="
+                  document.getElementById('me_type').value = 'In';
+                  document.getElementById('meTypeIn').className =
+                    'm-type-btn active-orange';
+                  document.getElementById('meTypeOut').className = 'm-type-btn';
+                "
+              >
+                ↓ IN (Received)
+              </button>
+              <button
+                class="m-type-btn"
+                id="meTypeOut"
+                onclick="
+                  document.getElementById('me_type').value = 'Out';
+                  document.getElementById('meTypeOut').className =
+                    'm-type-btn active-orange';
+                  document.getElementById('meTypeIn').className = 'm-type-btn';
+                "
+              >
+                ↑ OUT (Used / Sold)
+              </button>
+            </div>
+            <select id="me_type" style="display: none">
+              <option>In</option>
+              <option>Out</option>
+            </select>
+          </div>
+          <div class="m-section">
+            <div class="m-section-label">Entry Details</div>
+            <div class="row">
+              <div><label>Date *</label><input type="date" id="me_date" /></div>
+              <div>
+                <label>Site *</label
+                ><select id="me_site"></select>
+              </div>
+            </div>
+            <div class="row full">
+              <div>
+                <label>Material *</label>
+                <select id="me_mat" onchange="autoFillMat()">
+                  <option value="">-- Select Material --</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Quantity *</label
+                ><input
+                  type="number"
+                  id="me_qty"
+                  placeholder="e.g. 200"
+                  oninput="calcMatAmt()"
+                />
+              </div>
+              <div>
+                <label>Unit</label
+                ><input id="me_unit" placeholder="Bags / Kg / CFT" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Rate (₹ / unit)</label
+                ><input
+                  type="number"
+                  id="me_rate"
+                  placeholder="Per unit rate"
+                  oninput="calcMatAmt()"
+                />
+              </div>
+              <div>
+                <label>Supplier / Used For</label
+                ><input id="me_party" placeholder="e.g. Shree Cement" />
+              </div>
+            </div>
+          </div>
+          <!-- Calculated amount box -->
+          <div class="m-calc-box orange">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div class="m-calc-icon orange">₹</div>
+              <div>
+                <div class="m-calc-label orange">Calculated Amount</div>
+                <input
+                  type="number"
+                  id="me_amt"
+                  readonly
+                  style="
+                    background: transparent;
+                    border: none;
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: #c2410c;
+                    outline: none;
+                    width: 130px;
+                    padding: 0;
+                    font-family: inherit;
+                  "
+                  placeholder="Qty × Rate"
+                />
+              </div>
+            </div>
+            <span class="m-calc-hint orange">Qty × Rate</span>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn-modal-cancel" onclick="closeModal('matModal')">
+            Cancel
+          </button>
+          <button class="btn-modal-save" onclick="saveMatEntry()">
+            🧱 Save Entry
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Cash Modal -->
+    <div class="modal-overlay" id="cashModal">
+      <div class="modal">
+        <div class="mh">
+          <div class="mh-title">
+            <div class="mh-icon">💰</div>
+            <div class="mh-title-text">
+              <h3 id="cashModalTitle">Add Cash Entry</h3>
+              <p>Record money sent or expense</p>
+            </div>
+          </div>
+          <button class="close" onclick="closeModal('cashModal')">×</button>
+        </div>
+        <div class="mb">
+          <!-- Money Sent / Expense type toggle -->
+          <div class="m-section" style="gap: 8px">
+            <div class="m-section-label">Transaction Type</div>
+            <div class="m-type-toggle">
+              <button
+                class="m-type-btn active-green"
+                id="cashTypeMS"
+                onclick="
+                  document.getElementById('c_type').value = 'Money Sent';
+                  document.getElementById('cashTypeMS').className =
+                    'm-type-btn active-green';
+                  document.getElementById('cashTypeExp').className =
+                    'm-type-btn';
+                "
+              >
+                ↗ Money Sent
+              </button>
+              <button
+                class="m-type-btn"
+                id="cashTypeExp"
+                onclick="
+                  document.getElementById('c_type').value = 'Expense';
+                  document.getElementById('cashTypeExp').className =
+                    'm-type-btn active-green';
+                  document.getElementById('cashTypeMS').className =
+                    'm-type-btn';
+                "
+              >
+                💸 Expense
+              </button>
+            </div>
+            <select id="c_type" style="display: none">
+              <option>Money Sent</option>
+              <option>Expense</option>
+            </select>
+          </div>
+          <div class="m-section">
+            <div class="m-section-label">Transaction Details</div>
+            <div class="row">
+              <div><label>Date *</label><input type="date" id="c_date" /></div>
+              <div>
+                <label>Site *</label
+                ><select id="c_site"></select>
+              </div>
+            </div>
+            <div class="row full">
+              <div>
+                <label>Expense Head</label>
+                <select id="c_head">
+                  <option>Labour Payment</option>
+                  <option>Material Purchase</option>
+                  <option>Petty Expense</option>
+                  <option>Fuel</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+            <!-- Amount hero field -->
+            <div>
+              <label
+                style="
+                  font-size: 10.5px;
+                  font-weight: 600;
+                  color: #64748b;
+                  display: block;
+                  margin-bottom: 6px;
+                "
+                >Amount (₹) *</label
+              >
+              <div class="m-amount-wrap">
+                <span class="m-amount-prefix green">₹</span>
+                <input
+                  type="number"
+                  id="c_amt"
+                  placeholder="0"
+                  class="m-amount-input"
+                />
+              </div>
+            </div>
+            <!-- Payment mode pill grid -->
+            <div>
+              <label
+                style="
+                  font-size: 10.5px;
+                  font-weight: 600;
+                  color: #64748b;
+                  display: block;
+                  margin-bottom: 6px;
+                "
+                >Payment Mode</label
+              >
+              <div class="m-mode-grid" id="cashModeGrid">
+                <button class="m-mode-btn" onclick="setCashMode('Cash', this)">
+                  Cash
+                </button>
+                <button
+                  class="m-mode-btn active"
+                  onclick="setCashMode('UPI', this)"
+                >
+                  UPI
+                </button>
+                <button
+                  class="m-mode-btn"
+                  onclick="setCashMode('Bank Transfer', this)"
+                >
+                  Bank
+                </button>
+                <button
+                  class="m-mode-btn"
+                  onclick="setCashMode('Cheque', this)"
+                >
+                  Cheque
+                </button>
+                <button class="m-mode-btn" onclick="setCashMode('NEFT', this)">
+                  NEFT
+                </button>
+                <button class="m-mode-btn" onclick="setCashMode('RTGS', this)">
+                  RTGS
+                </button>
+              </div>
+              <select id="c_mode" style="display: none">
+                <option>Cash</option>
+                <option selected>UPI</option>
+                <option>Bank Transfer</option>
+                <option>Cheque</option>
+                <option>NEFT</option>
+                <option>RTGS</option>
+              </select>
+            </div>
+          </div>
+          <div class="m-section">
+            <div class="m-section-label">Party Details</div>
+            <div class="row">
+              <div>
+                <!-- BUG-009: Party field — required text input -->
+                <label>Party <span style="color: var(--danger)">*</span></label>
+                <input
+                  id="c_party"
+                  placeholder="e.g. Raj Kumar or JSW Steel"
+                  required
+                />
+              </div>
+              <div>
+                <label>Notes</label
+                ><input id="c_notes" placeholder="Brief description" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mf">
+          <button class="btn-modal-cancel" onclick="closeModal('cashModal')">
+            Cancel
+          </button>
+          <button class="btn-modal-save" onclick="saveCash()">
+            💰 Save Entry
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ AI ASSISTANT WIDGET ════════════ -->
+    <div class="ai-chat-fab" onclick="toggleAIChat()">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+    </div>
+
+    <div class="ai-chat-panel" id="aiChatPanel">
+      <div class="ai-chat-header">
+        <div class="ai-chat-title">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
+          </svg>
+          ConstructCo Assistant
+        </div>
+        <button class="ai-chat-close" onclick="toggleAIChat()">✖</button>
+      </div>
+      <div class="ai-chat-body" id="aiChatBody">
+        <div class="ai-message agent">
+          <div class="ai-bubble">
+            Hello! I am the ConstructCo Assistant. How can I assist you with
+            your operations today?
+          </div>
+        </div>
+      </div>
+      <div class="ai-chat-footer">
+        <input
+          type="text"
+          id="aiChatInput"
+          placeholder="Ask about materials, sites, labour..."
+          onkeypress="handleAIChatKeyPress(event)"
+        />
+        <button onclick="sendAIChatMessage()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="app.js"></script>
+
+    <!-- ════════════ BOTTOM NAV ════════════ -->
+    <div id="bottomNav">
+      <button
+        class="bnav-item active"
+        id="bn-overview"
+        onclick="showPageBnav('overview')"
+      >
+        <span class="bnav-icon">🏠</span>Overview
+      </button>
+      <button class="bnav-item" id="bn-labour" onclick="showPageBnav('labour')">
+        <span class="bnav-icon">👷</span>Labour
+      </button>
+      <button
+        class="bnav-item"
+        id="bn-materials"
+        onclick="showPageBnav('materials')"
+      >
+        <span class="bnav-icon">🧱</span>Materials
+      </button>
+      <button
+        class="bnav-item"
+        id="bn-cashbook"
+        onclick="showPageBnav('cashbook')"
+      >
+        <span class="bnav-icon">💰</span>Cashbook
+      </button>
+    </div>
+  </body>
+</html>
